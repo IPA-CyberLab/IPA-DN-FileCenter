@@ -113,7 +113,7 @@ namespace IPA.DN.FileCenter
                 // 設定データベースに記載されているディレクトリを作成
                 CreateRootDirectory();
 
-                Browser = new LogBrowser(new LogBrowserOptions(this.RootDirectoryFullPath, flags: LogBrowserFlags.NoPreview | LogBrowserFlags.NoRootDirectory), FileCenterConsts.FileBrowserHttpDir);
+                Browser = new LogBrowser(new LogBrowserOptions(this.RootDirectoryFullPath, flags: LogBrowserFlags.NoPreview | LogBrowserFlags.NoRootDirectory | LogBrowserFlags.SecureJson), FileCenterConsts.FileBrowserHttpDir);
             }
             catch
             {
