@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -26,6 +27,7 @@ namespace IPA.DN.FileCenter
     {
         readonly HttpServerStartupHelper StartupHelper;
         readonly AspNetLib AspNetLib;
+        Server? FileCenterServer = null;
 
         public Startup(IConfiguration configuration)
         {
@@ -57,12 +59,17 @@ namespace IPA.DN.FileCenter
             EasyCookieAuth.AuthenticationPasswordValidator = StartupHelper.SimpleBasicAuthenticationPasswordValidator;
             EasyCookieAuth.ConfigureServices(services, !StartupHelper.ServerOptions.AutomaticRedirectToHttpsIfPossible);
 
+            // 
+
             // MVC 機能を追加
             services.AddControllersWithViews()
                 .ConfigureMvcWithAspNetLib(AspNetLib);
 
+            // FileCenter サーバーの初期化
+            this.FileCenterServer = new Server();
+
             // シングルトンサービスの注入
-            //services.AddSingleton(new Server());
+            services.AddSingleton(this.FileCenterServer);
 
             // 全ページ共通コンテキストの注入
             //services.AddScoped<PageContext>();
@@ -117,7 +124,7 @@ namespace IPA.DN.FileCenter
             // クリーンアップ動作を定義
             lifetime.ApplicationStopping.Register(() =>
             {
-                //server._DisposeSafe();
+                this.FileCenterServer._DisposeSafe();
 
                 AspNetLib._DisposeSafe();
                 StartupHelper._DisposeSafe();
