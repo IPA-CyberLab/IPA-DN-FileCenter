@@ -1,0 +1,68 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <LangVersion>8.0</LangVersion>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+    <BlazorWebAssemblyEnableLinking>false</BlazorWebAssemblyEnableLinking>
+    <BlazorWebAssemblyI18NAssemblies>all</BlazorWebAssemblyI18NAssemblies>
+    <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
+    <OutputType>Exe</OutputType>
+    <Nullable>enable</Nullable>
+    <TieredCompilationQuickJit>false</TieredCompilationQuickJit>
+    <TieredCompilation>false</TieredCompilation>
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <PublishReadyToRunShowWarnings>true</PublishReadyToRunShowWarnings>
+    <PublishTrimmed>false</PublishTrimmed>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DefineConstants></DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DefineConstants>TRACE;DEBUG;</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Local\**" />
+    <Compile Remove="Log\**" />
+    <Content Remove="Local\**" />
+    <Content Remove="Log\**" />
+    <EmbeddedResource Remove="Local\**" />
+    <EmbeddedResource Remove="Log\**" />
+    <None Remove="Local\**" />
+    <None Remove="Log\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../submodules/IPA-DN-Cores/Cores.NET/Cores.Codes/**/*.cs" />
+    <Content Include="../submodules/IPA-DN-Cores/Cores.NET/Cores.Codes/**/*.cshtml" />
+    <EmbeddedResource Include="../submodules/IPA-DN-Cores/Cores.NET/Cores.Codes/Resources/**/*" />
+  </ItemGroup>
+
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent" Condition="'$(BuildingInsideVisualStudio)' == 'true'">
+    <Exec Command="$(ProjectDir)\\..\\submodules\\IPA-DN-Cores\\Cores.NET\\Dev.Tools\\CompiledBin\\DebugHost.exe stop $(ProjectName) dotnet exec $(TargetPath) Daemon Test" />
+  </Target>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(BuildingInsideVisualStudio)' == 'true'">
+    <Exec Command="$(ProjectDir)\\..\\submodules\\IPA-DN-Cores\\Cores.NET\\Dev.Tools\\CompiledBin\\DebugHost.exe start $(ProjectName) dotnet exec $(TargetPath) Daemon Test" />
+  </Target>
+
+  <ItemGroup>
+    <ProjectReference Include="..\submodules\IPA-DN-Cores\Cores.NET\Cores.Web\Cores.Web.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="3.1.0" />
+    <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="3.1.0" />
+    <PackageReference Include="Microsoft.Extensions.FileProviders.Physical" Version="3.1.0" />
+    <PackageReference Include="Microsoft.Extensions.FileProviders.Composite" Version="3.1.0" />
+  </ItemGroup>
+
+</Project>
