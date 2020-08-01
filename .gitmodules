@@ -1,0 +1,3 @@
+[submodule "submodules/IPA-DN-Cores"]
+	path = submodules/IPA-DN-Cores
+	url = https://github.com/IPA-CyberLab/IPA-DN-Cores.git
