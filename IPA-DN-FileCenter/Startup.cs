@@ -20,7 +20,7 @@ using IPA.Cores.Codes;
 using IPA.Cores.Helper.Codes;
 using static IPA.Cores.Globals.Codes;
 
-namespace IPA-DN-FileCenter
+namespace IPA.DN.FileCenter
 {
     public class Startup
     {
@@ -51,11 +51,11 @@ namespace IPA-DN-FileCenter
 
             // リクエスト数制限機能を追加
             services.AddHttpRequestRateLimiter<HttpRequestRateLimiterHashKeys.SrcIPAddress>(_ => { });
-            
+
             ////// Cookie 認証機能を追加
-            //EasyCookieAuth.LoginFormMessage.TrySet("ログインが必要です。");
-            //EasyCookieAuth.AuthenticationPasswordValidator = StartupHelper.SimpleBasicAuthenticationPasswordValidator;
-            //EasyCookieAuth.ConfigureServices(services, !StartupHelper.ServerOptions.AutomaticRedirectToHttpsIfPossible);
+            EasyCookieAuth.LoginFormMessage.TrySet("ログインが必要です。");
+            EasyCookieAuth.AuthenticationPasswordValidator = StartupHelper.SimpleBasicAuthenticationPasswordValidator;
+            EasyCookieAuth.ConfigureServices(services, !StartupHelper.ServerOptions.AutomaticRedirectToHttpsIfPossible);
 
             // MVC 機能を追加
             services.AddControllersWithViews()

@@ -11,13 +11,13 @@ using IPA.Cores.Basic;
 using IPA.Cores.Helper.Basic;
 using static IPA.Cores.Globals.Basic;
 
-namespace IPA-DN-FileCenter
+namespace IPA.DN.FileCenter
 {
     public class Program
     {
         public static int Main(string[] args)
         {
-            const string appName = "IPA-DN-FileCenter";
+            const string appName = "IPA.DN.FileCenter";
 
             return StandardMainFunctions.DaemonMain.DoMain(
                 new CoresLibOptions(CoresMode.Application,
@@ -33,8 +33,8 @@ namespace IPA-DN-FileCenter
                     UseKestrelWithIPACoreStack = true,
                     DebugKestrelToConsole = false,
                     UseSimpleBasicAuthentication = false,
-                    HoldSimpleBasicAuthenticationDatabase = false,
-                    AutomaticRedirectToHttpsIfPossible = true,
+                    HoldSimpleBasicAuthenticationDatabase = true,
+                    AutomaticRedirectToHttpsIfPossible = false,
                 }));
 
             //CreateHostBuilder(args).Build().Run();
