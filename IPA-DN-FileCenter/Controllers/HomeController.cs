@@ -5,9 +5,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using APP_NAME_HERE.Models;
+using IPA-DN-FileCenter.Models;
 
-namespace APP_NAME_HERE.Controllers
+namespace IPA-DN-FileCenter.Controllers
 {
     public class HomeController : Controller
     {

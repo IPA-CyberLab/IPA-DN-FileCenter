@@ -20,7 +20,7 @@ using IPA.Cores.Codes;
 using IPA.Cores.Helper.Codes;
 using static IPA.Cores.Globals.Codes;
 
-namespace APP_NAME_HERE
+namespace IPA-DN-FileCenter
 {
     public class Startup
     {

@@ -11,13 +11,13 @@ using IPA.Cores.Basic;
 using IPA.Cores.Helper.Basic;
 using static IPA.Cores.Globals.Basic;
 
-namespace APP_NAME_HERE
+namespace IPA-DN-FileCenter
 {
     public class Program
     {
         public static int Main(string[] args)
         {
-            const string appName = "APP_NAME_HERE";
+            const string appName = "IPA-DN-FileCenter";
 
             return StandardMainFunctions.DaemonMain.DoMain(
                 new CoresLibOptions(CoresMode.Application,

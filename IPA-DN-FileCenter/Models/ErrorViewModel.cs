@@ -1,6 +1,6 @@
 using System;
 
-namespace APP_NAME_HERE.Models
+namespace IPA-DN-FileCenter.Models
 {
     public class ErrorViewModel
     {
