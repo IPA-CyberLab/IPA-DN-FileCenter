@@ -49,6 +49,7 @@ namespace IPA.DN.FileCenter
             {
                 HttpResult result = await server.ProcessFileBrowserRequestAsync(HttpContext.Connection.LocalIpAddress._UnmapIPv4(),
                     Request._GetRequestPathAndQueryString(),
+                    Request, Response,
                     this._GetRequestCancellationToken());
 
                 return result.GetHttpActionResult();

@@ -58,6 +58,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net;
+using Microsoft.AspNetCore.Http;
 
 namespace IPA.DN.FileCenter
 {
@@ -122,9 +123,9 @@ namespace IPA.DN.FileCenter
             }
         }
 
-        public async Task<HttpResult> ProcessFileBrowserRequestAsync(IPAddress clientIpAddress, string requestPathAndQueryString, CancellationToken cancel = default)
+        public async Task<HttpResult> ProcessFileBrowserRequestAsync(IPAddress clientIpAddress, string requestPathAndQueryString, HttpRequest request, HttpResponse response, CancellationToken cancel = default)
         {
-            return await this.Browser.ProcessRequestAsync(clientIpAddress, requestPathAndQueryString, cancel);
+            return await this.Browser.ProcessRequestAsync(clientIpAddress, requestPathAndQueryString, request, response, cancel);
         }
 
         // 設定データベースに記載されているディレクトリを作成
