@@ -69,16 +69,21 @@ namespace IPA.DN.FileCenter
         public const string HiveSettingsName = "FileCenter/Settings";
 
         public const string FileBrowserHttpDir = "/files";
+
+        public const string DefaultWebSiteTitle = "FileCenter";
     }
 
     public class DbHive : INormalizable
     {
         public string DataStoreRootDir = "";
         public string PIN = "";
+        public string WebSiteTitle = "";
 
         public void Normalize()
         {
             if (DataStoreRootDir._IsEmpty()) DataStoreRootDir = FileCenterConsts.DefaultStoreRoot;
+
+            if (WebSiteTitle._IsEmpty()) WebSiteTitle = FileCenterConsts.DefaultWebSiteTitle;
         }
     }
 
@@ -110,11 +115,20 @@ namespace IPA.DN.FileCenter
                     getDefaultDataFunc: () => new DbHive(),
                     policy: HiveSyncPolicy.AutoReadWriteFile,
                     serializer: HiveSerializerSelection.RichJson);
-
+                
                 // 設定データベースに記載されているディレクトリを作成
                 CreateRootDirectory();
 
-                Browser = new LogBrowser(new LogBrowserOptions(this.RootDirectoryFullPath, flags: LogBrowserFlags.NoPreview | LogBrowserFlags.NoRootDirectory | LogBrowserFlags.SecureJson), FileCenterConsts.FileBrowserHttpDir);
+                Browser = new LogBrowser(new LogBrowserOptions(this.RootDirectoryFullPath,
+                    systemTitle: this.DbSnapshot.WebSiteTitle,
+                    flags: LogBrowserFlags.NoPreview | LogBrowserFlags.NoRootDirectory | LogBrowserFlags.SecureJson), FileCenterConsts.FileBrowserHttpDir);
+
+                this.HiveData.EventListener.RegisterCallback(async (caller, type, state) =>
+                {
+                    await SettingsUpdateAsync();
+                });
+
+                SettingsUpdateAsync()._GetResult();
             }
             catch
             {
@@ -123,9 +137,19 @@ namespace IPA.DN.FileCenter
             }
         }
 
-        public async Task<HttpResult> ProcessFileBrowserRequestAsync(IPAddress clientIpAddress, string requestPathAndQueryString, HttpRequest request, HttpResponse response, CancellationToken cancel = default)
+        // 設定内容が変化したときに呼び出される
+        async Task SettingsUpdateAsync()
         {
-            return await this.Browser.ProcessRequestAsync(clientIpAddress, requestPathAndQueryString, request, response, cancel);
+            await Task.CompletedTask;
+
+            var data = this.DbSnapshot;
+
+            this.Browser.Options.SetSystemTitle(data.WebSiteTitle);
+        }
+
+        public async Task<HttpResult> ProcessFileBrowserRequestAsync(IPAddress clientIpAddress, int clientPort, string requestPathAndQueryString, HttpRequest request, HttpResponse response, CancellationToken cancel = default)
+        {
+            return await this.Browser.ProcessRequestAsync(clientIpAddress, clientPort, requestPathAndQueryString, request, response, cancel);
         }
 
         // 設定データベースに記載されているディレクトリを作成

@@ -47,7 +47,9 @@ namespace IPA.DN.FileCenter
             }
             else
             {
-                HttpResult result = await server.ProcessFileBrowserRequestAsync(HttpContext.Connection.LocalIpAddress._UnmapIPv4(),
+                HttpResult result = await server.ProcessFileBrowserRequestAsync(
+                    HttpContext.Connection.RemoteIpAddress._UnmapIPv4(),
+                    HttpContext.Connection.RemotePort,
                     Request._GetRequestPathAndQueryString(),
                     Request, Response,
                     this._GetRequestCancellationToken());
