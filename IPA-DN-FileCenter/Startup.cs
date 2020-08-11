@@ -59,7 +59,8 @@ namespace IPA.DN.FileCenter
             EasyCookieAuth.AuthenticationPasswordValidator = StartupHelper.SimpleBasicAuthenticationPasswordValidator;
             EasyCookieAuth.ConfigureServices(services, !StartupHelper.ServerOptions.AutomaticRedirectToHttpsIfPossible);
 
-            // 
+            // Razor ページを追加
+            services.AddRazorPages();
 
             // MVC 機能を追加
             services.AddControllersWithViews()
