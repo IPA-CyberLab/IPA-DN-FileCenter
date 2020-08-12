@@ -11,13 +11,13 @@
     <div class="box">
         <div class="content">
 
-            <p>ファイルをアップロードできます。</p>
+            <p>1 個または複数のファイルをアップロードできます。完了すると、乱数で生成された URL 等が表示されます。その URL 等をファイルを送りたい相手にメール等にコピー &amp; ペーストして送信してください。</p>
 
             @for (int i = 1; i <= FileCenterConsts.MaxUploadFiles; i++)
             {
 
                 <div class="field" id="field_@i" style="display: @(i == 1 ? "block" : "none")">
-                    <label class="label">アップロードするファイル #@i @(i == 1 ? "" : " (オプション)")</label>
+                    <label class="label">アップロードするファイル #@i @(i == 1 ? "" : " (オプション)"):</label>
                     <div class="control">
                         <div id="file-js-example" class="file has-name @(i == 1 ? "is-info" : "is-primary")">
                             <label class="file-label">
@@ -64,14 +64,13 @@
             <div class="field">
                 <label class="label">生成する URL に使用する文字列 (オプション):</label>
                 <div class="control has-icons-left">
-                    <input class="input is-info" type="text" placeholder="このアップローダで生成される URL の一部として使用される文字列を指定します。" name="urlhint" value="">
+                    <input class="input is-info" type="text" placeholder="このアップローダで生成される URL の一部として使用される文字列を指定します。(英数字のみ、32 文字以内)" name="urlhint" value="">
                     <span class="icon is-small is-left">
                         <i class="far fa-folder-open"></i>
                     </span>
                 </div>
                 <p class="help is-info">
-                    このファイルへのアクセス時のユーザー認証を有効化し、ID とパスワードをここで入力した相手先でしか利用できないように明示することができます。<br>
-                    これにより、ID とパスワードを記載したメールを送信する際に万一誤送信が発生しても、誤って受信した第三者は不正アクセス禁止法に違反することなくファイルにアクセスできなくなり、メールの誤送信時における誤送信者の法的責任を緩和できます。
+                    本システムではランダムで推測されにくい URL を自動生成しますが、ここで文字列を指定すると、その文字列を一部にできるだけ含んだ URL を生成するようになります。16 文字以内を推奨します。
                 </p>
             </div>
 
@@ -83,14 +82,14 @@
 
             <div class="field is-horizontal">
                 <div class="field-label">
-                    <label class="label">ユーザー認証:</label>
+                    <label class="label">ユーザー認証の有効化:</label>
                 </div>
                 <div class="field-body">
                     <div class="field is-narrow">
                         <div class="control">
                             <label class="checkbox">
-                                <input type="checkbox" name="auth">
-                                <i class="fas fa-lock"></i> ユーザー認証を有効にする (すべてのファイルは自動的に暗号化されサーバー上に格納されます)
+                                <input type="checkbox" name="auth" value="true" checked>
+                                <i class="fas fa-lock"></i> ユーザー認証を有効にする (すべてのファイルがアップロード時に XTS-AES256 で強力に暗号化されサーバー上に格納されます。複雑なパスワードが乱数で自動生成されます。パスワードが暗号化の鍵としても使われます。パスワードを知らない限り、サーバー管理者やクラウド事業者であってもファイルの内容を解読することはできません)<br>※ ユーザー認証を無効にしている場合は、URL を知っている人は誰でもファイルにアクセスできます。
                             </label>
                         </div>
                     </div>
@@ -99,13 +98,13 @@
 
             <div class="field is-horizontal">
                 <div class="field-label">
-                    <label class="label">アクセスログ確認機能の有効化::</label>
+                    <label class="label">アクセスログ確認機能の有効化:</label>
                 </div>
                 <div class="field-body">
                     <div class="field is-narrow">
                         <div class="control">
                             <label class="checkbox">
-                                <input type="checkbox" name="auth">
+                                <input type="checkbox" name="log" value="true" checked>
                                 <i class="fas fa-search"></i> 生成された URL へのアクセス試行やファイルのダウンロードのアクセスログの確認機能を有効にする
                             </label>
                         </div>
@@ -121,8 +120,8 @@
                     <div class="field is-narrow">
                         <div class="control">
                             <label class="checkbox">
-                                <input type="checkbox" name="zip">
-                                <i class="far fa-file-archive"></i> すべてのファイルを 1 つの暗号化 ZIP ファイルに変換して格納する
+                                <input type="checkbox" name="zip" value="true" checked>
+                                <i class="far fa-file-archive"></i> すべてのファイルを 1 つの暗号化 ZIP ファイルに変換して格納する (ZIP のパスワードは乱数で自動生成されます)
                             </label>
                         </div>
                     </div>
@@ -137,7 +136,7 @@
                     <div class="field is-narrow">
                         <div class="control">
                             <label class="checkbox">
-                                <input type="checkbox" name="auth">
+                                <input type="checkbox" name="once" value="true" checked>
                                 <i class="fas fa-shield-alt"></i> 生成された URL に最初にアクセスしたコンピュータのみがファイルをダウンロードできるようにする<br>　　(最初にアクセスした IP アドレスから 60 分間のみダウンロード可能)
                             </label>
                         </div>
@@ -152,7 +151,7 @@
                 <div class="field-body">
                     <div class="field has-addons is-narrow">
                         <p class="control is-expanded  has-icons-left">
-                            <input class="input" name="days" placeholder="日数を 1 以上で指定">
+                            <input class="input" name="days" placeholder="日数を 1 以上で指定" value="10">
                             <span class="icon is-small is-left">
                                 <i class="fas fa-calendar-day"></i>
                             </span>
@@ -173,7 +172,7 @@
                     </button>
                 </div>
                 <p class="help is-info">
-                    この送信ボタンは、1 回だけクリックしてください。何度もクリックしないでください。送信には、回線速度とファイルのサイズにより、かなりの時間がかかる場合があります。Web ブラウザのプログレスバーが止まったように見えることがありますが、ブラウザを操作せずに、そのままお待ちください。目安として、1 分の時間で、ADSL 回線の場合 10 Mbytes、光ファイバー回線の場合 100 Mbytes 程度のアップロードができます。モバイル回線などでは ADSL の 10 ～ 100 倍の時間がかかります。
+                    このアップロードボタンは、1 回だけクリックしてください。何度もクリックしないでください。送信には、回線速度とファイルのサイズにより、かなりの時間がかかる場合があります。Web ブラウザのプログレスバーが止まったように見えることがありますが、ブラウザを操作せずに、そのままお待ちください。目安として、1 分の時間で、ADSL 回線の場合 10 Mbytes、光ファイバー回線の場合 100 Mbytes 程度のアップロードができます。モバイル回線などでは ADSL の 10 ～ 100 倍の時間がかかります。
                 </p>
             </div>
         </div>
