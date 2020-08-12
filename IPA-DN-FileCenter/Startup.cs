@@ -73,7 +73,7 @@ namespace IPA.DN.FileCenter
             services.AddSingleton(this.FileCenterServer);
 
             // 全ページ共通コンテキストの注入
-            //services.AddScoped<PageContext>();
+            services.AddScoped<PageContext>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

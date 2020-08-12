@@ -18,7 +18,7 @@ namespace IPA.DN.FileCenter
         public static int Main(string[] args)
         {
             const string appName = "IPA.DN.FileCenter";
-
+            
             return StandardMainFunctions.DaemonMain.DoMain(
                 new CoresLibOptions(CoresMode.Application,
                     appName: appName,
@@ -35,6 +35,7 @@ namespace IPA.DN.FileCenter
                     UseSimpleBasicAuthentication = false,
                     HoldSimpleBasicAuthenticationDatabase = true,
                     AutomaticRedirectToHttpsIfPossible = false,
+                    DenyRobots = true,
                 }));
 
             //CreateHostBuilder(args).Build().Run();
