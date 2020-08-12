@@ -435,7 +435,8 @@ namespace IPA.DN.FileCenter
             else
             {
                 // 暗号化 ZIP ありの場合、すべてのファイルを ZIP で圧縮・暗号化した上で 1 つの ZIP ファイルとして保存する
-                string zipFileFullPath = Lfs.PP.Combine(newDirFullPath, "test.zip");
+                string zipFileName = PPWin.GetFileName(fileList.FileList[0].RelativeFileName) + Consts.Extensions.Zip;
+                string zipFileFullPath = Lfs.PP.Combine(newDirFullPath, zipFileName);
                 if (option.Auth)
                 {
                     zipFileFullPath += Consts.Extensions.EncryptedXtsAes256;
