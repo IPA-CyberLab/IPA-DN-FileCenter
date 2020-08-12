@@ -71,6 +71,8 @@ namespace IPA.DN.FileCenter
         public const string FileBrowserHttpDir = "/files";
 
         public const string DefaultWebSiteTitle = "FileCenter";
+
+        public const int MaxUploadFiles = 10;
     }
 
     public class DbHive : INormalizable

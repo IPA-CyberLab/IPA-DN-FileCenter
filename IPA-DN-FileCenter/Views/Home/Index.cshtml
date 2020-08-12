@@ -1,6 +1,8 @@
 ﻿@inject Server server;
 @{
     Page.Title = "";
+
+    var dbSnapshot = server.DbSnapshot;
 }
 
 <h2 class="title is-4">@Page.FullTitle</h2>
@@ -11,93 +13,169 @@
 
             <p>ファイルをアップロードできます。</p>
 
-            <div class="field">
-                <label class="label">Name</label>
-                <div class="control">
-                    <input class="input" type="text" placeholder="Text input">
+            @for (int i = 1; i <= FileCenterConsts.MaxUploadFiles; i++)
+            {
+
+                <div class="field" id="field_@i" style="display: @(i == 1 ? "block" : "none")">
+                    <label class="label">アップロードするファイル #@i @(i == 1 ? "" : " (オプション)")</label>
+                    <div class="control">
+                        <div id="file-js-example" class="file has-name @(i == 1 ? "is-info" : "is-primary")">
+                            <label class="file-label">
+                                <input class="file-input" type="file" name="file_@(i)" id="file_@(i)" multiple="multiple" onchange="FileControlOnUpdate(this)">
+                                <span class="file-cta">
+                                    <span class="file-icon">
+                                        <i class="fas fa-upload"></i>
+                                    </span>
+                                    <span class="file-label" style="font-weight: bold">
+                                        アップロードするファイルの選択@(i == 1 ? "" : " (追加)")
+                                    </span>
+                                </span>
+                                <span class="file-name">
+                                    ファイルが選択されていません。
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="control" id="dirdiv_@(i)" style="display: none">
+                        <input class="input @(i == 1 ? "is-link" : "is-primary")" type="text" name="dirname_@(i)" placeholder="オプション: ファイル #@i の仮想サブディレクトリ名 (省略可能)">
+                    </div>
                 </div>
-            </div>
 
-            <div id="file-js-example" class="file has-name">
-                <label class="file-label">
-                    <input class="file-input" type="file" name="resume" multiple="multiple">
-                    <span class="file-cta">
-                        <span class="file-icon">
-                            <i class="fas fa-upload"></i>
-                        </span>
-                        <span class="file-label">
-                            Choose a file…
-                        </span>
-                    </span>
-                    <span class="file-name">
-                        No file uploaded
-                    </span>
-                </label>
-            </div>
+            }
+
+            <p>　</p>
 
             <div class="field">
-                <label class="label">Username</label>
+                <label class="label">このファイルを受け取る相手の名前 (できるだけ入力してください):</label>
                 <div class="control has-icons-left has-icons-right">
-                    <input class="input is-success" type="text" placeholder="Text input" value="bulma">
+                    <input class="input is-primary" type="text" placeholder="このファイルの受け取り手を特定できる組織名および名前 (名字だけでも可) を入力することをお勧めします。" name="destination" value="">
                     <span class="icon is-small is-left">
                         <i class="fas fa-user"></i>
                     </span>
-                    <span class="icon is-small is-right">
-                        <i class="fas fa-check"></i>
+                </div>
+                <p class="help is-primary">
+                    このファイルへのアクセス時のユーザー認証を有効化し、ID とパスワードをここで入力した相手先でしか利用できないように明示することができます。<br>
+                    これにより、ID とパスワードを記載したメールを送信する際に万一誤送信が発生しても、誤って受信した第三者は不正アクセス禁止法に違反することなくファイルにアクセスできなくなり、メールの誤送信時における誤送信者の法的責任を緩和できます。
+                </p>
+            </div>
+
+            <p>　</p>
+
+            <div class="field">
+                <label class="label">生成する URL に使用する文字列 (オプション):</label>
+                <div class="control has-icons-left">
+                    <input class="input is-info" type="text" placeholder="このアップローダで生成される URL の一部として使用される文字列を指定します。" name="urlhint" value="">
+                    <span class="icon is-small is-left">
+                        <i class="far fa-folder-open"></i>
                     </span>
                 </div>
-                <p class="help is-success">This username is available</p>
+                <p class="help is-info">
+                    このファイルへのアクセス時のユーザー認証を有効化し、ID とパスワードをここで入力した相手先でしか利用できないように明示することができます。<br>
+                    これにより、ID とパスワードを記載したメールを送信する際に万一誤送信が発生しても、誤って受信した第三者は不正アクセス禁止法に違反することなくファイルにアクセスできなくなり、メールの誤送信時における誤送信者の法的責任を緩和できます。
+                </p>
+            </div>
+
+            <p>　</p>
+
+            <div class="field">
+                <label class="label">その他のオプション:</label>
             </div>
 
             <div class="field is-horizontal">
-                <div class="field-label is-normal">
-                    <label class="label">ファイル 1</label>
+                <div class="field-label">
+                    <label class="label">ユーザー認証:</label>
                 </div>
                 <div class="field-body">
-                    <div class="field">
+                    <div class="field is-narrow">
+                        <div class="control">
+                            <label class="checkbox">
+                                <input type="checkbox" name="auth">
+                                <i class="fas fa-lock"></i> ユーザー認証を有効にする (すべてのファイルは自動的に暗号化されサーバー上に格納されます)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal">
+                <div class="field-label">
+                    <label class="label">アクセスログ確認機能の有効化::</label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow">
+                        <div class="control">
+                            <label class="checkbox">
+                                <input type="checkbox" name="auth">
+                                <i class="fas fa-search"></i> 生成された URL へのアクセス試行やファイルのダウンロードのアクセスログの確認機能を有効にする
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal">
+                <div class="field-label">
+                    <label class="label">暗号化 ZIP ファイルに変換:</label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow">
+                        <div class="control">
+                            <label class="checkbox">
+                                <input type="checkbox" name="zip">
+                                <i class="far fa-file-archive"></i> すべてのファイルを 1 つの暗号化 ZIP ファイルに変換して格納する
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal">
+                <div class="field-label">
+                    <label class="label">1 回のみダウンロード可能:</label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow">
+                        <div class="control">
+                            <label class="checkbox">
+                                <input type="checkbox" name="auth">
+                                <i class="fas fa-shield-alt"></i> 生成された URL に最初にアクセスしたコンピュータのみがファイルをダウンロードできるようにする<br>　　(最初にアクセスした IP アドレスから 60 分間のみダウンロード可能)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal">
+                <div class="field-label">
+                    <label class="label">有効期限の設定:</label>
+                </div>
+                <div class="field-body">
+                    <div class="field has-addons is-narrow">
+                        <p class="control is-expanded  has-icons-left">
+                            <input class="input" name="days" placeholder="日数を 1 以上で指定">
+                            <span class="icon is-small is-left">
+                                <i class="fas fa-calendar-day"></i>
+                            </span>
+                        </p>
                         <p class="control">
-                            <div class="select is-fullwidth">
-                                <input type="file" name="file1" multiple="multiple" />
-                            </div>
+                            <a class="button is-static">
+                                日間のみ有効
+                            </a>
                         </p>
                     </div>
                 </div>
             </div>
 
-            <div class="field is-horizontal">
-                <div class="field-label is-normal">
-                    <label class="label">ファイル 1</label>
+            <div class="field">
+                <div class="control">
+                    <button class="button is-link" style="font-weight: bold">
+                        <i class="fas fa-network-wired"></i>&nbsp;ファイルをアップロード
+                    </button>
                 </div>
-                <div class="field-body">
-                    <div class="field is-narrow">
-                        <div class="control">
-                            <div class="select is-fullwidth">
-                                <input type="file" name="file1" multiple="multiple" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <p class="help is-info">
+                    この送信ボタンは、1 回だけクリックしてください。何度もクリックしないでください。送信には、回線速度とファイルのサイズにより、かなりの時間がかかる場合があります。Web ブラウザのプログレスバーが止まったように見えることがありますが、ブラウザを操作せずに、そのままお待ちください。目安として、1 分の時間で、ADSL 回線の場合 10 Mbytes、光ファイバー回線の場合 100 Mbytes 程度のアップロードができます。モバイル回線などでは ADSL の 10 ～ 100 倍の時間がかかります。
+                </p>
             </div>
-
-
-            <div class="field is-horizontal">
-                <div class="field-label is-normal">
-                    <label class="label">ファイル 1</label>
-                </div>
-                <div class="field-body">
-                    <div class="field is-narrow">
-                        <div class="control">
-                            <div class="select is-fullwidth">
-                                <input type="file" name="file1" multiple="multiple" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-
-
-            <input type="submit" value="アップロード" />
         </div>
     </div>
 </form>
@@ -107,18 +185,68 @@
 
     <script type="text/javascript">
 
-        function UploadButtonOnChange(control)
+        updateDirDivVisible();
+
+        function updateDirDivVisible()
         {
-            
+            for (let i = 1; i <= @FileCenterConsts.MaxUploadFiles; i++)
+            {
+                let fileControl = document.getElementById("file_" + i);
+                let dirdiv = document.getElementById("dirdiv_" + i);
+
+                if (fileControl.files.length == 0)
+                {
+                    dirdiv.style.display = "none";
+                }
+                else
+                {
+                    dirdiv.style.display = "block";
+                }
+            }
         }
 
-  const fileInput = document.querySelector('#file-js-example input[type=file]');
-  fileInput.onchange = () => {
-    if (fileInput.files.length > 0) {
-      const fileName = document.querySelector('#file-js-example .file-name');
-      fileName.textContent = fileInput.files[0].name;
-    }
-  }
+        function FileControlOnUpdate(control)
+        {
+            var fileNameListStr = "";
+
+            for (let i = 0; i < control.files.length; i++)
+            {
+                const file = control.files[i];
+
+                if (i >= 1)
+                {
+                    fileNameListStr += ", ";
+                }
+
+                fileNameListStr += file.name;
+            }
+
+            if (control.files.length == 0)
+            {
+                fileNameListStr = "ファイルが選択されていません。";
+            }
+            else
+            {
+                fileNameListStr = control.files.length + " 個のファイル: " + fileNameListStr;
+
+                const tmp1 = control.id.indexOf("_");
+                const tmp2 = control.id.substr(tmp1 + 1);
+                const thisNumber = parseInt(tmp2);
+                const nextNumber = thisNumber + 1;
+
+                const nextField = document.getElementById("field_" + nextNumber);
+                if (nextField != null)
+                {
+                    nextField.style.display = "block";
+                }
+            }
+
+            const fileNameControl = control.parentNode.querySelector('.file-name');
+            fileNameControl.textContent = fileNameListStr;
+            fileNameControl.style.fontWeight = "bold";
+
+            updateDirDivVisible();
+        }
 
     </script>
 
