@@ -210,6 +210,10 @@ namespace IPA.DN.FileCenter
         {
             try
             {
+                foreach (var f in this.FileListInternal)
+                {
+                    await f._DisposeSafeAsync();
+                }
             }
             finally
             {
@@ -416,7 +420,7 @@ namespace IPA.DN.FileCenter
             // ディレクトリ作成
             await Lfs.CreateDirectoryAsync(newDirFullPath, flags: FileFlags.OnCreateSetCompressionFlag, cancel: cancel);
 
-            if (false)
+            if (true)
             {
                 // 暗号化 ZIP なしの場合、アップロードされてきたファイルを生ファイルシステムにそのまま書いていく
                 foreach (var file in fileList.FileList)
