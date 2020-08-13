@@ -99,7 +99,7 @@ namespace IPA.DN.FileCenter
             }
             else
             {
-                app.UseExceptionHandler("/Home/Error");
+                app.UseExceptionHandler("/Uploader/Error");
             }
 
             // エラーログを追加
@@ -120,7 +120,7 @@ namespace IPA.DN.FileCenter
             {
                 endpoints.MapControllerRoute(
                     name: "default",
-                    pattern: "{controller=Home}/{action=Index}/{id?}");
+                    pattern: "{controller=Uploader}/{action=Index}/{id?}");
             });
 
             // クリーンアップ動作を定義

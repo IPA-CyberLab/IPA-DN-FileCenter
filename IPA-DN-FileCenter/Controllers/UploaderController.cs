@@ -16,13 +16,13 @@ using IPA.Cores.Helper.Web;
 namespace IPA.DN.FileCenter.Controllers
 {
     [AutoValidateAntiforgeryToken]
-    public class HomeController : Controller
+    public class UploaderController : Controller
     {
         readonly Server server;
 
-        private readonly ILogger<HomeController> _logger;
+        private readonly ILogger<UploaderController> _logger;
 
-        public HomeController(ILogger<HomeController> logger, Server server)
+        public UploaderController(ILogger<UploaderController> logger, Server server)
         {
             _logger = logger;
 
