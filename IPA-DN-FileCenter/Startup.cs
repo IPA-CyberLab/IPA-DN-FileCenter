@@ -20,6 +20,7 @@ using static IPA.Cores.Globals.Web;
 using IPA.Cores.Codes;
 using IPA.Cores.Helper.Codes;
 using static IPA.Cores.Globals.Codes;
+using Microsoft.AspNetCore.Http.Features;
 
 namespace IPA.DN.FileCenter
 {

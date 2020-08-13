@@ -39,6 +39,9 @@ namespace IPA.DN.FileCenter.Controllers
             return View();
         }
 
+        [RequestSizeLimit(FileCenterConsts.UploadSizeHardLimit)]
+        [RequestFormLimits(MultipartBodyLengthLimit = FileCenterConsts.UploadSizeHardLimit)]
+        [DisableRequestSizeLimit]
         public async Task<IActionResult> UploadAsync(UploadFormRequest form,
             List<IFormFile> file_1,
             List<IFormFile> file_2,
@@ -84,8 +87,6 @@ namespace IPA.DN.FileCenter.Controllers
                 fl,
                 opt,
                 cancel);
-
-            result.ThrowIfException();
 
             return result._ObjectToJson()._AspNetTextActionResult();
 

@@ -13,7 +13,7 @@
 
             <p>1 個または複数のファイルをアップロードできます。完了すると、乱数で生成された URL 等が表示されます。その URL 等をファイルを送りたい相手にメール等にコピー &amp; ペーストして送信してください。</p>
 
-            @for (int i = 1; i <= FileCenterConsts.MaxUploadFiles; i++)
+            @for (int i = 1; i <= FileCenterConsts.MaxUploadFileFormElements; i++)
             {
 
                 <div class="field" id="field_@i" style="display: @(i == 1 ? "block" : "none")">
@@ -167,7 +167,7 @@
 
             <div class="field">
                 <div class="control">
-                    <button class="button is-link" style="font-weight: bold">
+                    <button class="button is-link" style="font-weight: bold" onclick="StartUpload(this)">
                         <i class="fas fa-network-wired"></i>&nbsp;ファイルをアップロード
                     </button>
                 </div>
@@ -188,7 +188,7 @@
 
         function updateDirDivVisible()
         {
-            for (let i = 1; i <= @FileCenterConsts.MaxUploadFiles; i++)
+            for (let i = 1; i <= @FileCenterConsts.MaxUploadFileFormElements; i++)
             {
                 let fileControl = document.getElementById("file_" + i);
                 let dirdiv = document.getElementById("dirdiv_" + i);
@@ -202,6 +202,11 @@
                     dirdiv.style.display = "block";
                 }
             }
+        }
+
+        function StartUpload(control)
+        {
+            control.className += " is-loading";
         }
 
         function FileControlOnUpdate(control)

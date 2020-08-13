@@ -72,9 +72,18 @@ namespace IPA.DN.FileCenter
 
         public const string DefaultWebSiteTitle = "FileCenter";
 
-        public const int MaxUploadFiles = 10;
+        public const int MaxUploadFileFormElements = 10;
 
         public const int MaxUrlHintLen = 32;
+
+        // 最大アップロード可能容量
+        public const long UploadSizeHardLimit = 100L * 1024 * 1024 * 1024; // 100GB
+
+        // デフォルトアップロード可能容量
+        public const long DefaultUploadSizeLimit = 2L * 1024 * 1024 * 1024; // 2GB
+
+        // デフォルトアップロード可能ファイル数
+        public const int DefaultUploadNumLimit = 100;
     }
 
     public class DbHive : INormalizable
@@ -83,6 +92,9 @@ namespace IPA.DN.FileCenter
         public string PIN = "";
         public string WebSiteTitle = "";
         public DateTimeOffset LastUploadDateTime;
+        public long UploadSizeLimit;
+        public int UploadNumLimit;
+
         public int LastSeqNo;
 
         public void Normalize()
@@ -92,6 +104,11 @@ namespace IPA.DN.FileCenter
             if (WebSiteTitle._IsEmpty()) WebSiteTitle = FileCenterConsts.DefaultWebSiteTitle;
 
             if (LastUploadDateTime._IsZeroDateTime()) LastUploadDateTime = Util.ZeroDateTimeOffsetValue;
+
+            if (UploadSizeLimit <= 0) UploadSizeLimit = FileCenterConsts.DefaultUploadSizeLimit;
+            UploadSizeLimit = Math.Min(UploadSizeLimit, FileCenterConsts.UploadSizeHardLimit);
+
+            if (UploadNumLimit <= 0) UploadNumLimit = FileCenterConsts.DefaultUploadNumLimit;
         }
     }
 
@@ -99,6 +116,8 @@ namespace IPA.DN.FileCenter
     {
         public string GeneratedUrlDir { get; set; } = "";
         public string GeneratedUrlDirAuthDirect { get; set; } = "";
+        public string GeneratedUrlFirstFileDirect { get; set; } = "";
+        public string GeneratedUrlFirstFileAuthCredentialDirect { get; set; } = "";
         public string? GeneratedUserName { get; set; }
         public string? GeneratedPassword { get; set; }
         public bool IsZipped { get; set; }
@@ -141,7 +160,7 @@ namespace IPA.DN.FileCenter
         {
             try
             {
-                fileName = PPWin.GetFileName(fileName);
+                fileName = PPWin.GetFileName(fileName)._MakeSafeFileName();
 
                 if (fileName._IsNullOrZeroLen()) throw new ArgumentNullException(nameof(fileName));
 
@@ -270,7 +289,7 @@ namespace IPA.DN.FileCenter
         public DbHive Db => HiveData.ManagedData;
         public DbHive DbSnapshot => HiveData.GetManagedDataSnapshot();
 
-        public string RootDirectoryFullPath => Path.Combine(Env.AppRootDir, DbSnapshot.DataStoreRootDir);
+        public string RootDirectoryFullPath => PP.Combine(Env.AppRootDir, DbSnapshot.DataStoreRootDir);
 
         readonly LogBrowser Browser;
 
@@ -299,6 +318,8 @@ namespace IPA.DN.FileCenter
                     await SettingsUpdateAsync();
                 });
 
+                RootDirectoryFullPath._Debug();
+
                 SettingsUpdateAsync()._GetResult();
             }
             catch
@@ -326,7 +347,7 @@ namespace IPA.DN.FileCenter
         readonly AsyncLock DirectoryLock = new AsyncLock();
 
         // アップロードメイン処理
-        public async Task<ResultOrExeption<UploadResult>> UploadAsync(DateTimeOffset timeStamp, string ipAddress, string baseUrl, UploadFileList fileList, UploadOption option, CancellationToken cancel = default)
+        public async Task<UploadResult> UploadAsync(DateTimeOffset timeStamp, string ipAddress, string baseUrl, UploadFileList fileList, UploadOption option, CancellationToken cancel = default)
         {
             option.Normalize();
 
@@ -335,8 +356,27 @@ namespace IPA.DN.FileCenter
             string yymmddAndSeqNo;
 
             string authSubDirName = "";
+            string firstFileRelativeName = "";
 
             Uri baseUri = baseUrl._ParseUrl();
+
+            if (fileList.FileList.Count > DbSnapshot.UploadNumLimit)
+            {
+                // ファイル数超過
+                throw new CoresException($"Max uploadable files count is {DbSnapshot.UploadNumLimit}. You attempted to upload {fileList.FileList.Count} files.");
+            }
+
+            long totalStreamSize = 0;
+            foreach (var file in fileList.FileList)
+            {
+                totalStreamSize += file.Stream.Length;
+            }
+
+            if (totalStreamSize > DbSnapshot.UploadSizeLimit)
+            {
+                // ファイルサイス超過
+                throw new CoresException($"Max uploadable files total size is {DbSnapshot.UploadSizeLimit._GetFileSizeStr()}. You attempted to upload {totalStreamSize._GetFileSizeStr()}.");
+            }
 
             using (await DirectoryLock.LockWithAwait(cancel))
             {
@@ -417,7 +457,7 @@ namespace IPA.DN.FileCenter
             {
                 result.GeneratedUserName = "user" + yymmddAndSeqNo._ReplaceStr("_", "");
                 result.GeneratedPassword = "pass" + Str.GenRandPassword(24, false);
-                authSubDirName = "confidential" + Str.GenRandNumericPassword(8);
+                authSubDirName = "login" + Str.GenRandNumericPassword(8);
             }
 
             if (option.Zip)
@@ -427,81 +467,136 @@ namespace IPA.DN.FileCenter
             }
 
             // ディレクトリ作成
-            await Lfs.CreateDirectoryAsync(newDirFullPath, flags: FileFlags.OnCreateSetCompressionFlag, cancel: cancel);
+            await Lfs.CreateDirectoryAsync(newDirFullPath, cancel: cancel);
 
-            if (option.Zip == false)
+            long totalSize = 0;
+
+            try
             {
-                // 暗号化 ZIP なしの場合、アップロードされてきたファイルを生ファイルシステムにそのまま書いていく
-                foreach (var file in fileList.FileList)
+                if (option.Zip == false)
                 {
-                    string newFileFullPath = Lfs.PP.Combine(newDirFullPath, file.RelativeFileName);
+                    // 暗号化 ZIP なしの場合、アップロードされてきたファイルを生ファイルシステムにそのまま書いていく
+                    foreach (var file in fileList.FileList)
+                    {
+                        string newFileFullPath = Lfs.PP.Combine(newDirFullPath, file.RelativeFileName);
+                        if (option.Auth)
+                        {
+                            newFileFullPath += Consts.Extensions.EncryptedXtsAes256;
+                        }
+
+                        using var newFileObj = await Lfs.CreateAsync(newFileFullPath, flags: FileFlags.AutoCreateDirectory, cancel: cancel);
+                        using Stream newFileStream = option.Auth == false ? (Stream)newFileObj.GetStream(true) : new XtsAesRandomAccess(newFileObj, result.GeneratedPassword!, true).GetStream(true);
+                        totalSize += await file.Stream.CopyBetweenStreamAsync(newFileStream, cancel: cancel, flush: true);
+
+                        if (firstFileRelativeName._IsEmpty())
+                            firstFileRelativeName = file.RelativeFileName;
+                    }
+                }
+                else
+                {
+                    // 暗号化 ZIP ありの場合、すべてのファイルを ZIP で圧縮・暗号化した上で 1 つの ZIP ファイルとして保存する
+                    string zipFileName = yymmddAndSeqNo + "_" + PPWin.GetFileName(fileList.FileList[0].RelativeFileName) + Consts.Extensions.Zip;
+                    string zipFileFullPath = Lfs.PP.Combine(newDirFullPath, zipFileName);
                     if (option.Auth)
                     {
-                        newFileFullPath += Consts.Extensions.EncryptedXtsAes256;
+                        zipFileFullPath += Consts.Extensions.EncryptedXtsAes256;
                     }
 
-                    using var newFileObj = await Lfs.CreateAsync(newFileFullPath, flags: FileFlags.AutoCreateDirectory, cancel: cancel);
-                    using Stream newFileStream = option.Auth == false ? (Stream)newFileObj.GetStream(true) : new XtsAesRandomAccess(newFileObj, result.GeneratedPassword!, true).GetStream(true);
-                    await file.Stream.CopyBetweenStreamAsync(newFileStream, cancel: cancel, flush: true);
+                    using var zipOutputFile = await Lfs.CreateAsync(zipFileFullPath, flags: FileFlags.AutoCreateDirectory, cancel: cancel);
+                    using IRandomAccess<byte> zipOutputFileRandomAccess = option.Auth == false ? (IRandomAccess<byte>)zipOutputFile : new XtsAesRandomAccess(zipOutputFile, result.GeneratedPassword!, true);
+                    using var zipWriter = new ZipWriter(new ZipContainerOptions(zipOutputFileRandomAccess));
+
+                    foreach (var file in fileList.FileList)
+                    {
+                        var metadata = new FileMetadata(attributes: FileAttributes.Normal, creationTime: timeStamp, lastWriteTime: timeStamp, lastAccessTime: timeStamp);
+
+                        totalSize += await zipWriter.ImportVirtualFileAsync(file.Stream,
+                            new FileContainerEntityParam(file.RelativeFileName, metadata,
+                                FileContainerEntityFlags.EnableCompression | FileContainerEntityFlags.CompressionMode_Fast,
+                            encryptPassword: result.GeneratedZipPassword,
+                            encoding: file.RelativeFileName._GetBestSuitableEncoding()
+                            ), cancel);
+                    }
+
+                    await zipWriter.FinishAsync(cancel);
+
+                    firstFileRelativeName = zipFileName;
                 }
-            }
-            else
-            {
-                // 暗号化 ZIP ありの場合、すべてのファイルを ZIP で圧縮・暗号化した上で 1 つの ZIP ファイルとして保存する
-                string zipFileName = PPWin.GetFileName(fileList.FileList[0].RelativeFileName) + Consts.Extensions.Zip;
-                string zipFileFullPath = Lfs.PP.Combine(newDirFullPath, zipFileName);
+
+                result.NumFiles = fileList.FileList.Count;
+                result.TotalFileSize = totalSize;
+
+                if (totalSize > DbSnapshot.UploadSizeLimit)
+                {
+                    // ファイルサイス超過
+                    throw new CoresException($"Max uploadable files total size is {DbSnapshot.UploadSizeLimit._GetFileSizeStr()}. You attempted to upload {totalStreamSize._GetFileSizeStr()}.");
+                }
+
+                // _secure.json ファイルを出力する
+                LogBrowserSecureJson secureJson = new LogBrowserSecureJson
+                {
+                    AuthRequired = option.Auth,
+                    AuthSubject = option.Destination._NonNull(),
+                    Expires = result.Expires,
+                    DisableAccessLog = false,
+                    AllowAccessToAccessLog = option.LogAccess,
+                    UploadTimeStamp = timeStamp,
+                    UploadIp = ipAddress,
+                    AllowOnlyOnce = option.Once,
+                    TotalFileSize = result.TotalFileSize,
+                    NumFiles = result.NumFiles,
+                };
+
                 if (option.Auth)
                 {
-                    zipFileFullPath += Consts.Extensions.EncryptedXtsAes256;
+                    secureJson.AuthDatabase = new KeyValueList<string, string>();
+                    secureJson.AuthDatabase.Add(result.GeneratedUserName!, Secure.SaltPassword(result.GeneratedPassword!));
+                    secureJson.AuthSubDirName = authSubDirName;
                 }
 
-                using var zipOutputFile = await Lfs.CreateAsync(zipFileFullPath, flags: FileFlags.AutoCreateDirectory, cancel: cancel);
-                using IRandomAccess<byte> zipOutputFileRandomAccess = option.Auth == false ? (IRandomAccess<byte>)zipOutputFile.GetStream(true) : new XtsAesRandomAccess(zipOutputFile, result.GeneratedPassword!, true);
-                using var zipWriter = new ZipWriter(new ZipContainerOptions(zipOutputFileRandomAccess));
+                // URL 生成
+                result.GeneratedUrlDir = baseUri._CombineUrl(FileCenterConsts.FileBrowserHttpDir + "/" + newDirName + "/").ToString();
+                result.GeneratedUrlDirAuthDirect = baseUri._CombineUrl(FileCenterConsts.FileBrowserHttpDir + "/" + newDirName + "/" + (option.Auth ? authSubDirName + "/" : "")).ToString();
+                result.GeneratedUrlFirstFileDirect = result.GeneratedUrlDirAuthDirect._CombineUrl(firstFileRelativeName).ToString();
 
-                foreach (var file in fileList.FileList)
+                if (option.Auth == false)
                 {
-                    var metadata = new FileMetadata(attributes: FileAttributes.Normal, creationTime: timeStamp, lastWriteTime: timeStamp, lastAccessTime: timeStamp);
+                    result.GeneratedUrlFirstFileAuthCredentialDirect = result.GeneratedUrlFirstFileDirect;
+                }
+                else
+                {
+                    string tmp = result.GeneratedUrlFirstFileDirect;
+                    if (tmp.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+                    {
+                        tmp = "http://" + result.GeneratedUserName + ":" + result.GeneratedPassword + "@" + tmp._Slice(7);
+                    }
+                    else if (tmp.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                    {
+                        tmp = "https://" + result.GeneratedUserName + ":" + result.GeneratedPassword + "@" + tmp._Slice(8);
+                    }
 
-                    await zipWriter.ImportVirtualFileAsync(file.Stream,
-                        new FileContainerEntityParam(file.RelativeFileName, metadata,
-                            FileContainerEntityFlags.EnableCompression | FileContainerEntityFlags.CompressionMode_Fast,
-                        encryptPassword: result.GeneratedZipPassword), cancel);
+                    result.GeneratedUrlFirstFileAuthCredentialDirect = tmp;
                 }
 
-                await zipWriter.FinishAsync(cancel);
+                secureJson.Normalize();
+
+                await Lfs.WriteJsonToFileAsync(Lfs.PP.Combine(newDirFullPath, Consts.FileNames.LogBrowserSecureJson), secureJson, cancel: cancel);
+
+                return result;
             }
-
-            // _secure.json ファイルを出力する
-            LogBrowserSecureJson secureJson = new LogBrowserSecureJson
+            catch
             {
-                AuthRequired = option.Auth,
-                AuthSubject = option.Destination._NonNull(),
-                Expires = result.Expires,
-                DisableAccessLog = false,
-                AllowAccessToAccessLog = option.LogAccess,
-                UploadTimeStamp = timeStamp,
-                UploadIp = ipAddress,
-                AllowOnlyOnce = option.Once,
-            };
-
-            if (option.Auth)
-            {
-                secureJson.AuthDatabase = new KeyValueList<string, string>();
-                secureJson.AuthDatabase.Add(result.GeneratedUserName!, result.GeneratedPassword!);
-                secureJson.AuthSubDirName = authSubDirName;
+                // 何らかの処理に失敗した場合はディレクトリごと削除する
+                try
+                {
+                    await Lfs.DeleteDirectoryAsync(newDirFullPath, true);
+                }
+                catch (Exception ex)
+                {
+                    ex._Error();
+                }
+                throw;
             }
-
-            // URL 生成
-            result.GeneratedUrlDir = baseUri._CombineUrl(FileCenterConsts.FileBrowserHttpDir + "/" + newDirName + "/").ToString();
-            result.GeneratedUrlDirAuthDirect = baseUri._CombineUrl(FileCenterConsts.FileBrowserHttpDir + "/" + newDirName + "/" + (option.Auth ? authSubDirName + "/" : "")).ToString();
-
-
-            secureJson.Normalize();
-
-            await Lfs.WriteJsonToFileAsync(Lfs.PP.Combine(newDirFullPath, Consts.FileNames.LogBrowserSecureJson), secureJson, cancel: cancel);
-
-            return new ResultOrExeption<UploadResult>(result);
         }
 
         // 設定データベースに記載されているディレクトリを作成
