@@ -10,6 +10,8 @@ using IPA.Cores.Helper.Basic;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using System.Threading;
+using IPA.Cores.Basic;
+using IPA.Cores.Helper.Web;
 
 namespace IPA.DN.FileCenter.Controllers
 {
@@ -76,14 +78,18 @@ namespace IPA.DN.FileCenter.Controllers
 
             opt.Normalize();
 
-            await server.UploadAsync(DateTimeOffset.Now,
+            var result = await server.UploadAsync(DateTimeOffset.Now,
                 Request.HttpContext.Connection.RemoteIpAddress._UnmapIPv4().ToString(),
                 Request.GetDisplayUrl(),
                 fl,
                 opt,
                 cancel);
 
-            return View("Privacy");
+            result.ThrowIfException();
+
+            return result._ObjectToJson()._AspNetTextActionResult();
+
+            //return View("Privacy");
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
