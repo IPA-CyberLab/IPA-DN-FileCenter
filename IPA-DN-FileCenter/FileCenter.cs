@@ -222,6 +222,15 @@ namespace IPA.DN.FileCenter
         }
     }
 
+    public class UploadFormCookies
+    {
+        public bool Auth { get; set; } = true;
+        public bool Log { get; set; } = true;
+        public bool Zip { get; set; } = false;
+        public bool Once { get; set; } = false;
+        public int Days { get; set; } = 0;
+    }
+
     public class UploadFormRequest
     {
         public string? Recipient { get; set; }
@@ -452,6 +461,12 @@ namespace IPA.DN.FileCenter
             string firstFileRelativeName = "";
 
             Uri baseUri = baseUrl._ParseUrl();
+
+            if (fileList.FileList.Count == 0)
+            {
+                // ファイルがない
+                throw new CoresException($"You must specify at least one file to upload.");
+            }
 
             if (fileList.FileList.Count > DbSnapshot.UploadNumLimit)
             {

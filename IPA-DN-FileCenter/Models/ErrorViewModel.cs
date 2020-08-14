@@ -7,5 +7,7 @@ namespace IPA.DN.FileCenter.Models
         public string RequestId { get; set; } = null!;
 
         public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
+
+        public Exception ErrorInfo { get; set; } = null!;
     }
 }

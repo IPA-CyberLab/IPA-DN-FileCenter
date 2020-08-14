@@ -1,4 +1,5 @@
 ﻿@inject Server server
+@model UploadFormCookies
 @{
     Page.Title = "";
 
@@ -78,7 +79,7 @@
             <p>　</p>
 
             <div class="field">
-                <label class="label">その他のオプション:</label>
+                <label class="label">セキュリティ オプション:</label>
             </div>
 
             <div class="field is-horizontal">
@@ -89,7 +90,7 @@
                     <div class="field is-narrow">
                         <div class="control">
                             <label class="checkbox">
-                                <input type="checkbox" name="auth" value="true" checked>
+                                <input type="checkbox" name="auth" value="true" @Model.Auth._BoolToChecked()>
                                 <i class="fas fa-lock"></i> ユーザー認証を有効にする (すべてのファイルがアップロード時に XTS-AES256 で強力に暗号化されサーバー上に格納されます。複雑なパスワードが乱数で自動生成されます。パスワードが暗号化の鍵としても使われます。パスワードを知らない限り、サーバー管理者やクラウド事業者であってもファイルの内容を解読することはできません)<br>※ ユーザー認証を無効にしている場合は、URL を知っている人は誰でもファイルにアクセスできます。
                             </label>
                         </div>
@@ -105,7 +106,7 @@
                     <div class="field is-narrow">
                         <div class="control">
                             <label class="checkbox">
-                                <input type="checkbox" name="log" value="true" checked>
+                                <input type="checkbox" name="log" value="true" @Model.Log._BoolToChecked()>
                                 <i class="fas fa-search"></i> 生成された URL へのアクセス試行やファイルのダウンロードのアクセスログの確認機能を有効にする
                             </label>
                         </div>
@@ -121,13 +122,34 @@
                     <div class="field is-narrow">
                         <div class="control">
                             <label class="checkbox">
-                                <input type="checkbox" name="zip" value="true" checked>
+                                <input type="checkbox" name="zip" value="true" @Model.Zip._BoolToChecked()>
                                 <i class="far fa-file-archive"></i> すべてのファイルを 1 つの暗号化 ZIP ファイルに変換して格納する (ZIP のパスワードは乱数で自動生成されます)
                             </label>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <p>　</p>
+
+            <div class="field">
+                <div class="control">
+                    <button class="button is-link" style="font-weight: bold" onclick="StartUpload(this)">
+                        <i class="fas fa-network-wired"></i>&nbsp;ファイルをアップロード
+                    </button>
+                </div>
+                <p class="help is-info">
+                    このアップロードボタンは、1 回だけクリックしてください。何度もクリックしないでください。送信には、回線速度とファイルのサイズにより、かなりの時間がかかる場合があります。Web ブラウザのプログレスバーが止まったように見えることがありますが、ブラウザを操作せずに、そのままお待ちください。目安として、1 分の時間で、ADSL 回線の場合 10 Mbytes、光ファイバー回線の場合 100 Mbytes 程度のアップロードができます。モバイル回線などでは ADSL の 10 ～ 100 倍の時間がかかります。
+                </p>
+            </div>
+
+            <hr>
+
+            <div class="field">
+                <label class="label">その他のオプション:</label>
+            </div>
+
+            <p>以下は、特に必要がある場合のみ指定してください。</p>
 
             <div class="field is-horizontal">
                 <div class="field-label">
@@ -137,7 +159,7 @@
                     <div class="field is-narrow">
                         <div class="control">
                             <label class="checkbox">
-                                <input type="checkbox" name="once" value="true" checked>
+                                <input type="checkbox" name="once" value="true" @Model.Once._BoolToChecked()>
                                 <i class="fas fa-shield-alt"></i> 生成された URL に最初にアクセスしたコンピュータのみがファイルをダウンロードできるようにする<br>　　(最初にアクセスした IP アドレスから 60 分間のみダウンロード可能)
                             </label>
                         </div>
@@ -152,7 +174,7 @@
                 <div class="field-body">
                     <div class="field has-addons is-narrow">
                         <p class="control is-expanded  has-icons-left">
-                            <input class="input" name="days" placeholder="日数を 1 以上で指定" value="10">
+                            <input class="input" name="days" placeholder="日数を 1 以上で指定" value="@(Model.Days >= 1 ? Model.Days.ToString() : "")">
                             <span class="icon is-small is-left">
                                 <i class="fas fa-calendar-day"></i>
                             </span>
@@ -164,17 +186,6 @@
                         </p>
                     </div>
                 </div>
-            </div>
-
-            <div class="field">
-                <div class="control">
-                    <button class="button is-link" style="font-weight: bold" onclick="StartUpload(this)">
-                        <i class="fas fa-network-wired"></i>&nbsp;ファイルをアップロード
-                    </button>
-                </div>
-                <p class="help is-info">
-                    このアップロードボタンは、1 回だけクリックしてください。何度もクリックしないでください。送信には、回線速度とファイルのサイズにより、かなりの時間がかかる場合があります。Web ブラウザのプログレスバーが止まったように見えることがありますが、ブラウザを操作せずに、そのままお待ちください。目安として、1 分の時間で、ADSL 回線の場合 10 Mbytes、光ファイバー回線の場合 100 Mbytes 程度のアップロードができます。モバイル回線などでは ADSL の 10 ～ 100 倍の時間がかかります。
-                </p>
             </div>
         </div>
     </div>

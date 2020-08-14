@@ -32,7 +32,11 @@ namespace IPA.DN.FileCenter.Controllers
 
         public IActionResult Index(PageContext page)
         {
-            return View();
+            UploadFormCookies? cookie = this._EasyLoadCookie<UploadFormCookies>("uploadForm");
+
+            if (cookie == null) cookie = new UploadFormCookies();
+
+            return View(cookie);
         }
 
         public IActionResult Privacy()
@@ -82,6 +86,17 @@ namespace IPA.DN.FileCenter.Controllers
 
             opt.Normalize();
 
+            UploadFormCookies cookie = new UploadFormCookies
+            {
+                Auth = form.Auth,
+                Days = form.Days,
+                Log = form.Log,
+                Once = form.Once,
+                Zip = form.Zip,
+            };
+
+            this._EasySaveCookie("uploadForm", cookie);
+
             var result = await server.UploadAsync(DateTimeOffset.Now,
                 Request.HttpContext.Connection.RemoteIpAddress._UnmapIPv4().ToString(),
                 Request.GetDisplayUrl(),
@@ -97,7 +112,7 @@ namespace IPA.DN.FileCenter.Controllers
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier, ErrorInfo = this._GetLastError() });
         }
     }
 }
