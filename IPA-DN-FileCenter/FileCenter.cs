@@ -145,10 +145,10 @@ namespace IPA.DN.FileCenter
 
             w.WriteLine("■ ファイルをダウンロードするための URL:");
             w.WriteLine(GeneratedUrlDir);
+            w.WriteLine();
 
             if (this.GeneratedUserName._IsFilled())
             {
-                w.WriteLine();
                 w.WriteLine("※ この URL は第三者に配布・転載しないでください。");
                 w.WriteLine();
 
@@ -612,8 +612,8 @@ namespace IPA.DN.FileCenter
                         totalSize += await zipWriter.ImportVirtualFileAsync(file.Stream,
                             new FileContainerEntityParam(file.RelativeFileName, metadata,
                                 FileContainerEntityFlags.EnableCompression | FileContainerEntityFlags.CompressionMode_Fast,
-                            encryptPassword: result.GeneratedZipPassword,
-                            encoding: file.RelativeFileName._GetBestSuitableEncoding()
+                                encryptPassword: result.GeneratedZipPassword,
+                                encoding: file.RelativeFileName._GetBestSuitableEncoding()
                             ), cancel);
                     }
 
