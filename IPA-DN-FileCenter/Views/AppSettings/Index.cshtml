@@ -1,0 +1,87 @@
+﻿@model AppSettings
+
+@{
+    Page.Title = "設定";
+}
+
+<h2 class="title is-4">@Page.FullTitle</h2>
+
+<form asp-action="Index">
+    <div class="box">
+        <div class="content">
+
+            <div class="field is-horizontal">
+                <div class="field-label is-normal">
+                    <label class="label">@Html.DisplayNameFor(model => model.WebSiteTitle)</label>
+                </div>
+                <div class="field-body">
+                    <div class="field">
+                        <p class="control">
+                            @Html.EditorFor(model => model.WebSiteTitle, new { htmlAttributes = new { @class = "input is-info" } })
+                            <span class="help is-primary" asp-validation-for="WebSiteTitle"></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal">
+                <div class="field-label is-normal">
+                    <label class="label">@Html.DisplayNameFor(model => model.PIN)</label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow">
+                        <p class="control">
+                            @Html.EditorFor(model => model.PIN, new { htmlAttributes = new { @class = "input is-info" } })
+                            <span class="help is-primary" asp-validation-for="PIN"></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal">
+                <div class="field-label is-normal">
+                    <label class="label">@Html.DisplayNameFor(model => model.UploadSizeLimit)</label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow">
+                        <p class="control">
+                            @Html.EditorFor(model => model.UploadSizeLimit, new { htmlAttributes = new { @class = "input is-info" } })
+                            <span class="help is-primary" asp-validation-for="UploadSizeLimit"></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal">
+                <div class="field-label is-normal">
+                    <label class="label">@Html.DisplayNameFor(model => model.UploadNumLimit)</label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow">
+                        <p class="control">
+                            @Html.EditorFor(model => model.UploadNumLimit, new { htmlAttributes = new { @class = "input is-info" } })
+                            <span class="help is-primary" asp-validation-for="UploadNumLimit"></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal">
+                <div class="field-label">
+                    <!-- Left empty for spacing -->
+                </div>
+                <div class="field-body">
+                    <div class="field">
+                        <div class="control">
+                            <input class="button is-success" type="submit" asp-action="Index" value="保存">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div asp-validation-summary="All" class="notification is-primary"></div>
+
+        </div>
+    </div>
+    <a class="is-info" href="/">トップページに戻る</a>
+</form>

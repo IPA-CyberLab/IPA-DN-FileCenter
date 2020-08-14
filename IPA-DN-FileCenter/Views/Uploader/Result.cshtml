@@ -1,10 +1,9 @@
-﻿@inject Server server
-@model UploadResult
+﻿@model UploadResult
 
 @{
     Page.Title = "ファイルのアップロードが完了しました";
 
-    var dbSnapshot = server.DbSnapshot;
+    var dbSnapshot = Server.DbSnapshot;
 
     string bodyTxt = Model.ToString();
 }
@@ -22,6 +21,7 @@
         <div class="control">
             <textarea class="textarea is-focused is-success" id="textbody" style="height: 30em; font-family: Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;" readonly>@bodyTxt</textarea>
         </div>
+        <p>　</p>
         <p>　</p>
         <p class="title is-6">3. 技術者向け情報</p>
         <p>以下は、このアップロード結果をコンピュータ処理プログラムによって自動使用したいと考える技術者向けの情報です。</p>

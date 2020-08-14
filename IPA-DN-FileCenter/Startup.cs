@@ -38,7 +38,7 @@ namespace IPA.DN.FileCenter
             StartupHelper = new HttpServerStartupHelper(configuration);
 
             // AspNetLib の初期化: 必要な機能のみ ON にすること
-            AspNetLib = new AspNetLib(configuration, AspNetLibFeatures.None);
+            AspNetLib = new AspNetLib(configuration, AspNetLibFeatures.EasyCookieAuth);
         }
 
         public IConfiguration Configuration { get; }

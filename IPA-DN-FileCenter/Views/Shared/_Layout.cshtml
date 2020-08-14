@@ -1,4 +1,7 @@
-﻿<!DOCTYPE html>
+﻿@{
+    bool authed = (User.Identity?.IsAuthenticated ?? false);
+}
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8" />
@@ -19,8 +22,11 @@
             </a>
             <div class="navbar-item">
                 <div class="buttons">
-                    <a class="button is-light" id="config_button" asp-controller="AppSettings" asp-action="Index">App 一覧設定</a>
-                    <a class="button is-light" id="logout_button" asp-controller="EasyCookieAuth" asp-action="Logout">ログアウト</a>
+                    <a class="button is-light" id="config_button" asp-controller="AppSettings" asp-action="Index">Uploader システム設定</a>
+                    @if (authed)
+                    {
+                        <a class="button is-light" id="logout_button" asp-controller="EasyCookieAuth" asp-action="Logout">ログアウト</a>
+                    }
                 </div>
             </div>
         </div>

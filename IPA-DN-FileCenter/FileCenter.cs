@@ -59,6 +59,7 @@ using Newtonsoft.Json.Converters;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net;
 using Microsoft.AspNetCore.Http;
+using System.ComponentModel.DataAnnotations;
 
 namespace IPA.DN.FileCenter
 {
@@ -70,7 +71,7 @@ namespace IPA.DN.FileCenter
 
         public const string FileBrowserHttpDir = "/d";
 
-        public const string DefaultWebSiteTitle = "FileCenter";
+        public const string DefaultWebSiteTitle = "IPA FileCenter Secure File Upload System";
 
         public const int MaxUploadFileFormElements = 10;
 
@@ -86,16 +87,25 @@ namespace IPA.DN.FileCenter
         public const int DefaultUploadNumLimit = 100;
     }
 
-    public class DbHive : INormalizable
+    public class AppSettings : INormalizable, IValidatableObject, IValidatable
     {
-        public string DataStoreRootDir = "";
-        public string PIN = "";
-        public string WebSiteTitle = "";
-        public DateTimeOffset LastUploadDateTime;
-        public long UploadSizeLimit;
-        public int UploadNumLimit;
+        [Display(Name = "Web サイト表示名")]
+        [Required]
+        public string WebSiteTitle { get; set; } = "";
 
-        public int LastSeqNo;
+        [Display(Name = "PIN コード")]
+        public string? PIN { get; set; }
+
+        [Display(Name = "一度にアップロード可能なファイルの合計サイズ")]
+        public long UploadSizeLimit { get; set; }
+
+        [Display(Name = "一度にアップロード可能なファイルの数")]
+        public int UploadNumLimit { get; set; }
+
+        public string DataStoreRootDir { get; set; } = "";
+        public DateTimeOffset LastUploadDateTime { get; set; }
+
+        public int LastSeqNo { get; set; }
 
         public void Normalize()
         {
@@ -109,6 +119,13 @@ namespace IPA.DN.FileCenter
             UploadSizeLimit = Math.Min(UploadSizeLimit, FileCenterConsts.UploadSizeHardLimit);
 
             if (UploadNumLimit <= 0) UploadNumLimit = FileCenterConsts.DefaultUploadNumLimit;
+        }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+            => this._Validate(validationContext);
+
+        public void Validate()
+        {
         }
     }
 
@@ -132,6 +149,8 @@ namespace IPA.DN.FileCenter
         public override string ToString()
         {
             StringWriter w = new StringWriter();
+
+            w.WriteLine("--------- ファイルの送信のご案内 ここから ----------");
 
             if (this.Recipient._IsFilled())
             {
@@ -217,6 +236,8 @@ namespace IPA.DN.FileCenter
                 w.WriteLine();
             }
 
+            w.WriteLine("--------- ファイルの送信のご案内 ここまで ----------");
+            w.WriteLine();
 
             return w.ToString();
         }
@@ -384,12 +405,12 @@ namespace IPA.DN.FileCenter
         readonly SingleInstance SingleInstance;
 
         // Hive ベースのデータベース
-        readonly HiveData<DbHive> HiveData;
+        readonly HiveData<AppSettings> HiveData;
 
         // データベースへのアクセスを容易にするための自動プロパティ
         public CriticalSection DbLock => HiveData.DataLock;
-        public DbHive Db => HiveData.ManagedData;
-        public DbHive DbSnapshot => HiveData.GetManagedDataSnapshot();
+        public AppSettings Db => HiveData.ManagedData;
+        public AppSettings DbSnapshot => HiveData.GetManagedDataSnapshot();
 
         public string RootDirectoryFullPath => PP.Combine(Env.AppRootDir, DbSnapshot.DataStoreRootDir);
 
@@ -403,8 +424,8 @@ namespace IPA.DN.FileCenter
                 this.SingleInstance = new SingleInstance(FileCenterConsts.SingleInstanceKey);
 
                 // 設定データベースの初期化
-                this.HiveData = new HiveData<DbHive>(Hive.SharedLocalConfigHive, FileCenterConsts.HiveSettingsName,
-                    getDefaultDataFunc: () => new DbHive(),
+                this.HiveData = new HiveData<AppSettings>(Hive.SharedLocalConfigHive, FileCenterConsts.HiveSettingsName,
+                    getDefaultDataFunc: () => new AppSettings(),
                     policy: HiveSyncPolicy.AutoReadWriteFile,
                     serializer: HiveSerializerSelection.RichJson);
 
