@@ -1,0 +1,51 @@
+﻿@inject Server server
+@model UploadResult
+
+@{
+    Page.Title = "ファイルのアップロードが完了しました";
+
+    var dbSnapshot = server.DbSnapshot;
+
+    string bodyTxt = Model.ToString();
+}
+
+<h2 class="title is-4">@Page.FullTitle</h2>
+
+<div class="box">
+    <div class="content">
+        <p class="title is-6">1. 自動生成されたアップロード先 URL</p>
+        <p style="font-weight: bold"><a href="@Model.GeneratedUrlDir">@Model.GeneratedUrlDir</a></p>
+        <p>正しくアップロードできているか、意図しないファイルを誤ってアップロードしていないか等を、十分確認してください。</p>
+        <p>　</p>
+        <p class="title is-6">2. 以下の本文をメールに貼り付けて相手先に送信</p>
+        <button class="button is-success" style="font-weight: bold" onclick="CopyToClipboard(this)"><i class="far fa-copy"></i>&nbsp;以下の本文をクリップボードにコピーする</button>
+        <div class="control">
+            <textarea class="textarea is-focused is-success" id="textbody" style="height: 30em; font-family: Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;" readonly>@bodyTxt</textarea>
+        </div>
+        <p>　</p>
+        <p class="title is-6">3. 技術者向け情報</p>
+        <p>以下は、このアップロード結果をコンピュータ処理プログラムによって自動使用したいなと考える技術者向けの情報です。</p>
+        <div class="control">
+            <pre><code class="language-json">@Html.Raw(Model._ObjectToJson())</code></pre>
+        </div>
+    </div>
+</div>
+
+
+
+
+@section scripts {
+
+    <script type="text/javascript">
+
+        function CopyToClipboard(btn)
+        {
+            btn.textContent = "クリップボードにコピーしました !";
+            btn.className = "button is-info";
+            document.getElementById("textbody").select();
+            document.execCommand('copy');
+        }
+
+    </script>
+
+}

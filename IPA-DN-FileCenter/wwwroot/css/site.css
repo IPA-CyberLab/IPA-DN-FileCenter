@@ -71,10 +71,23 @@ body {
 }
 
 /* 2020/08/12 dnobori */
+/* ファイルアップロードコントロールのファイル名の横幅を広げる */
 .file-name {
     max-width: 100%;
 }
 
-
-
+/* JSON 描画コントロールが Bulma と競合しないようにする (number がおかしくなる問題の解決) */
+.content .tag, .content .number {
+    display: inline;
+    padding: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    text-align: inherit;
+    vertical-align: inherit;
+    border-radius: inherit;
+    font-weight: inherit;
+    white-space: inherit;
+    background: inherit;
+    margin: inherit;
+}
 

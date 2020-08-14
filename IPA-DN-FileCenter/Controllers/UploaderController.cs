@@ -88,9 +88,9 @@ namespace IPA.DN.FileCenter.Controllers
                 opt,
                 cancel);
 
-            return result._ObjectToJson()._AspNetTextActionResult();
+            //return result._ObjectToJson()._AspNetTextActionResult();
 
-            //return View("Privacy");
+            return View("Result", result);
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

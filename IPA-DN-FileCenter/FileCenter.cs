@@ -127,6 +127,99 @@ namespace IPA.DN.FileCenter
         public int NumFiles { get; set; }
         public long TotalFileSize { get; set; }
         public bool AllowOnlyOnce { get; set; }
+        public string FirstFileNameForPrint { get; set; } = "";
+
+        public override string ToString()
+        {
+            StringWriter w = new StringWriter();
+
+            if (this.Destination._IsFilled())
+            {
+                w.WriteLine($"{this.Destination.Trim()} 様");
+                w.WriteLine();
+            }
+
+            w.WriteLine($"ファイル 「{this.FirstFileNameForPrint}」 等 {this.NumFiles._ToString3()} ファイル (合計 {this.TotalFileSize._GetFileSizeStr()}) をお送りいたします。");
+            w.WriteLine("大変お手数ですが、以下の URL にアクセスの上、ダウンロードをお願いいたします。");
+            w.WriteLine();
+
+            w.WriteLine("■ ファイルをダウンロードするための URL:");
+            w.WriteLine(GeneratedUrlDir);
+
+            if (this.GeneratedUserName._IsFilled())
+            {
+                w.WriteLine();
+                w.WriteLine("※ この URL は第三者に配布・転載しないでください。");
+                w.WriteLine();
+
+                w.WriteLine("■ 上記 URL にアクセスするための認証ユーザー名とパスワード:");
+                w.WriteLine("ユーザー名:");
+                w.WriteLine(this.GeneratedUserName);
+                w.WriteLine();
+
+                w.WriteLine("パスワード:");
+                w.WriteLine(this.GeneratedPassword);
+                w.WriteLine();
+
+
+            }
+
+            if (this.GeneratedZipPassword._IsFilled())
+            {
+                w.WriteLine("■ ZIP ファイルの暗号化パスワード:");
+                w.WriteLine(this.GeneratedZipPassword);
+                w.WriteLine();
+            }
+
+            if (this.Expires < Util.MaxDateTimeOffsetValue)
+            {
+                w.WriteLine("■ ファイルのダウンロード有効期限:");
+                w.WriteLine(this.Expires._ToLocalDtStr(option: DtStrOption.DateOnly));
+                w.WriteLine();
+            }
+
+            if (this.AllowOnlyOnce)
+            {
+                w.WriteLine("■ セキュリティ機能:");
+                w.WriteLine("ファイルは、最初にダウンロードした時から 60 分間は同じ端末 (IP)");
+                w.WriteLine("から再度ダウンロード可能です。それ以降はダウンロードできません。");
+                w.WriteLine();
+            }
+
+            if (this.GeneratedUserName._IsFilled())
+            {
+                w.WriteLine("■ 法律上の通知: 万一本メールを誤受信等で入手された場合");
+
+                if (this.Destination._IsFilled())
+                {
+                    w.WriteLine($"上記のユーザー名とパスワードは、アクセス制御機能の識別符号に該当し、\r\n「{this.Destination.Trim()}」様専用に発行されたものです。");
+                }
+                else
+                {
+                    w.WriteLine(@"上記のユーザー名とパスワードは、アクセス制御機能の識別符号に該当し、
+本メールの「本文」の冒頭に宛名人が指定されている場合は、
+その宛名人のみに宛てて専用で発行されたものです。");
+                }
+
+                w.WriteLine(@"それ以外の方は、認証に使用することはできません。
+万一、本メールがそれ以外の方に誤送信または共有された場合、
+受信者が上記のユーザー名とパスワードを用いて URL にアクセスすることは
+不正アクセス禁止法により禁止されています。本メールが誤受信である
+と思われる場合、上記にアクセスをすることなく、送信者に誤送信の旨
+をお知らせいただければ幸いです。誤受信された方が上記にアクセスを
+してユーザー名とパスワードを入力する行為には、刑事責任および民事責任
+が課せられます。");
+
+                w.WriteLine("上記にかかわらず、本ファイルの送信者およびその同一組織の職員等が、");
+                w.WriteLine("送信済みファイル内容および履歴の確認のため、自らアクセスすることは");
+                w.WriteLine("許容されます。[アクセス管理者]");
+
+                w.WriteLine();
+            }
+
+
+            return w.ToString();
+        }
     }
 
     public class UploadFormRequest
@@ -457,7 +550,7 @@ namespace IPA.DN.FileCenter
             {
                 result.GeneratedUserName = "user" + yymmddAndSeqNo._ReplaceStr("_", "");
                 result.GeneratedPassword = "pass" + Str.GenRandPassword(24, false);
-                authSubDirName = "login" + Str.GenRandNumericPassword(8);
+                authSubDirName = "auth" + Str.GenRandNumericPassword(7);
             }
 
             if (option.Zip)
@@ -471,6 +564,8 @@ namespace IPA.DN.FileCenter
 
             long totalSize = 0;
 
+            string firstFileName = "";
+
             try
             {
                 if (option.Zip == false)
@@ -478,6 +573,8 @@ namespace IPA.DN.FileCenter
                     // 暗号化 ZIP なしの場合、アップロードされてきたファイルを生ファイルシステムにそのまま書いていく
                     foreach (var file in fileList.FileList)
                     {
+                        if (firstFileName._IsEmpty()) firstFileName = PPWin.GetFileName(file.RelativeFileName);
+
                         string newFileFullPath = Lfs.PP.Combine(newDirFullPath, file.RelativeFileName);
                         if (option.Auth)
                         {
@@ -508,6 +605,8 @@ namespace IPA.DN.FileCenter
 
                     foreach (var file in fileList.FileList)
                     {
+                        if (firstFileName._IsEmpty()) firstFileName = Lfs.PP.GetFileName(file.RelativeFileName);
+
                         var metadata = new FileMetadata(attributes: FileAttributes.Normal, creationTime: timeStamp, lastWriteTime: timeStamp, lastAccessTime: timeStamp);
 
                         totalSize += await zipWriter.ImportVirtualFileAsync(file.Stream,
@@ -525,6 +624,8 @@ namespace IPA.DN.FileCenter
 
                 result.NumFiles = fileList.FileList.Count;
                 result.TotalFileSize = totalSize;
+
+                result.FirstFileNameForPrint = firstFileName;
 
                 if (totalSize > DbSnapshot.UploadSizeLimit)
                 {
