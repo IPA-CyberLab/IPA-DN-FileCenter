@@ -1,0 +1,47 @@
+﻿@model UploadFormCookies
+@{
+    Page.Title = "PIN コードの入力";
+
+    var dbSnapshot = Server.DbSnapshot;
+
+}
+
+<h2 class="title is-4">@Page.FullTitle</h2>
+
+<form asp-controller="Uploader" asp-action="PIN" enctype="multipart/form-data" method="post">
+    <div class="box">
+        <div class="content">
+
+            <p>このアップロードシステムを利用してファイルをアップロードするには、PIN コードが必要です。<br>PIN コードは、このシステムの利用を依頼した依頼者から事前に電子メールなどで伝達されていると思われます。</p>
+            <p>PIN コードが不明な場合は、このシステムの利用を依頼した依頼者にお問い合わせください。</p>
+
+            <p>　</p>
+
+            <div class="field">
+                <label class="label">PIN コード:</label>
+                <div class="control has-icons-left has-icons-right">
+                    <input class="input is-primary" type="password" placeholder="PIN コードを入力してください。" style="font-weight: bold" name="PIN" value="">
+                    <span class="icon is-small is-left">
+                        <i class="fas fa-key"></i>
+                    </span>
+                </div>
+                @if (ViewBag.Incorrect == true)
+                {
+                    <p style="color: firebrick">PIN コードが異なります。</p>
+                }
+            </div>
+
+            <p>　</p>
+
+            <div class="field">
+                <div class="control">
+                    <button class="button is-link" style="font-weight: bold" onclick="StartUpload(this)">
+                        <i class="fas fa-key"></i>&nbsp;OK
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+

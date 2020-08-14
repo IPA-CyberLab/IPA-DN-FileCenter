@@ -32,11 +32,38 @@ namespace IPA.DN.FileCenter.Controllers
 
         public IActionResult Index(PageContext page)
         {
+            // PIN コードチェック
+            string? cookiePin = this._EasyLoadCookie<string>("pin")._NonNullTrim();
+            string? currentPin = server.DbSnapshot.PIN;
+            if (currentPin._IsFilled() && currentPin._IsSame(cookiePin) == false)
+            {
+                // PIN コード不正。入力ページに飛ばす
+                return View("PIN");
+            }
+
             UploadFormCookies? cookie = this._EasyLoadCookie<UploadFormCookies>("uploadForm");
 
             if (cookie == null) cookie = new UploadFormCookies();
 
             return View(cookie);
+        }
+
+        public IActionResult PIN(PageContext page, string? pin)
+        {
+            pin = pin._NonNullTrim();
+            // 入力された PIN コードのチェック
+            string? currentPin = server.DbSnapshot.PIN;
+            if (currentPin._IsFilled() && currentPin._IsSame(pin) == false)
+            {
+                // PIN コード不正。入力ページに飛ばす
+                ViewBag.Incorrect = true;
+                return View("PIN");
+            }
+
+            this._EasySaveCookie("pin", pin);
+
+            // トップページに移動
+            return Redirect("/");
         }
 
         public IActionResult Privacy()
@@ -82,6 +109,7 @@ namespace IPA.DN.FileCenter.Controllers
                 Once = form.Once,
                 UrlHint = form.UrlHint,
                 Zip = form.Zip,
+                PIN = this._EasyLoadCookie<string>("pin")._NonNullTrim(),
             };
 
             opt.Normalize();
@@ -89,9 +117,9 @@ namespace IPA.DN.FileCenter.Controllers
             UploadFormCookies cookie = new UploadFormCookies
             {
                 Auth = form.Auth,
-                Days = form.Days,
                 Log = form.Log,
-                Once = form.Once,
+                //Once = form.Once,
+                //Days = form.Days,
                 Zip = form.Zip,
             };
 

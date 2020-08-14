@@ -158,7 +158,7 @@
                     <div class="field is-narrow">
                         <div class="control">
                             <label class="checkbox">
-                                <input type="checkbox" name="once" value="true" @Model.Once._BoolToChecked()>
+                                <input type="checkbox" name="once" value="true">
                                 <i class="fas fa-shield-alt"></i> 生成された URL に最初にアクセスしたコンピュータのみがファイルをダウンロードできるようにする<br>　　(最初にアクセスした IP アドレスから 60 分間のみダウンロード可能)
                             </label>
                         </div>
@@ -173,7 +173,7 @@
                 <div class="field-body">
                     <div class="field has-addons is-narrow">
                         <p class="control is-expanded  has-icons-left">
-                            <input class="input" name="days" placeholder="日数を 1 以上で指定" style="font-weight: bold" value="@(Model.Days >= 1 ? Model.Days.ToString() : "")">
+                            <input class="input" name="days" placeholder="日数を 1 以上で指定" style="font-weight: bold">
                             <span class="icon is-small is-left">
                                 <i class="fas fa-calendar-day"></i>
                             </span>

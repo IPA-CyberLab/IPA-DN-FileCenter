@@ -158,7 +158,15 @@ namespace IPA.DN.FileCenter
                 w.WriteLine();
             }
 
-            w.WriteLine($"ファイル 「{this.FirstFileNameForPrint}」 等 {this.NumFiles._ToString3()} ファイル (合計 {this.TotalFileSize._GetFileSizeStr()}) をお送りいたします。");
+            if (this.NumFiles == 1)
+            {
+                w.WriteLine($"ファイル 「{this.FirstFileNameForPrint}」 ({this.TotalFileSize._GetFileSizeStr()}) をお送りいたします。");
+            }
+            else
+            {
+                w.WriteLine($"ファイル 「{this.FirstFileNameForPrint}」 等 {this.NumFiles._ToString3()} ファイル (合計 {this.TotalFileSize._GetFileSizeStr()}) をお送りいたします。");
+            }
+
             w.WriteLine("大変お手数ですが、以下の URL にアクセスの上、ダウンロードをお願いいたします。");
             w.WriteLine();
 
@@ -248,8 +256,8 @@ namespace IPA.DN.FileCenter
         public bool Auth { get; set; } = true;
         public bool Log { get; set; } = true;
         public bool Zip { get; set; } = false;
-        public bool Once { get; set; } = false;
-        public int Days { get; set; } = 0;
+        //public bool Once { get; set; } = false;
+        //public int Days { get; set; } = 0;
     }
 
     public class UploadFormRequest
@@ -367,6 +375,7 @@ namespace IPA.DN.FileCenter
 
     public class UploadOption : INormalizable
     {
+        public string? PIN { get; set; }
         public string? Destination { get; set; }
         public string? UrlHint { get; set; }
         public bool Auth { get; set; }
@@ -482,6 +491,14 @@ namespace IPA.DN.FileCenter
             string firstFileRelativeName = "";
 
             Uri baseUri = baseUrl._ParseUrl();
+
+            // PIN コードチェック
+            string? currentPin = DbSnapshot.PIN;
+            if (currentPin._IsFilled() && currentPin._IsSame(option.PIN) == false)
+            {
+                // PIN コード不正
+                throw new CoresException("Incorrect PIN code.");
+            }
 
             if (fileList.FileList.Count == 0)
             {
