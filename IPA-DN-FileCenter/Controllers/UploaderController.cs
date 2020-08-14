@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Http.Extensions;
 using System.Threading;
 using IPA.Cores.Basic;
 using IPA.Cores.Helper.Web;
+using Org.BouncyCastle.Crypto;
 
 namespace IPA.DN.FileCenter.Controllers
 {
@@ -29,7 +30,7 @@ namespace IPA.DN.FileCenter.Controllers
             this.server = server;
         }
 
-        public IActionResult Index()
+        public IActionResult Index(PageContext page)
         {
             return View();
         }
@@ -72,7 +73,7 @@ namespace IPA.DN.FileCenter.Controllers
             {
                 Auth = form.Auth,
                 Days = form.Days,
-                Destination = form.Destination,
+                Destination = form.Recipient,
                 LogAccess = form.Log,
                 Once = form.Once,
                 UrlHint = form.UrlHint,

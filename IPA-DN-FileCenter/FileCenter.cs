@@ -122,7 +122,7 @@ namespace IPA.DN.FileCenter
         public string? GeneratedPassword { get; set; }
         public bool IsZipped { get; set; }
         public string? GeneratedZipPassword { get; set; }
-        public string Destination { get; set; } = "";
+        public string Recipient { get; set; } = "";
         public DateTimeOffset Expires { get; set; } = Util.MaxDateTimeOffsetValue;
         public int NumFiles { get; set; }
         public long TotalFileSize { get; set; }
@@ -133,9 +133,9 @@ namespace IPA.DN.FileCenter
         {
             StringWriter w = new StringWriter();
 
-            if (this.Destination._IsFilled())
+            if (this.Recipient._IsFilled())
             {
-                w.WriteLine($"{this.Destination.Trim()} 様");
+                w.WriteLine($"{this.Recipient.Trim()} 様");
                 w.WriteLine();
             }
 
@@ -190,9 +190,9 @@ namespace IPA.DN.FileCenter
             {
                 w.WriteLine("■ 法律上の通知: 万一本メールを誤受信等で入手された場合");
 
-                if (this.Destination._IsFilled())
+                if (this.Recipient._IsFilled())
                 {
-                    w.WriteLine($"上記のユーザー名とパスワードは、アクセス制御機能の識別符号に該当し、\r\n「{this.Destination.Trim()}」様専用に発行されたものです。");
+                    w.WriteLine($"上記のユーザー名とパスワードは、アクセス制御機能の識別符号に該当し、\r\n「{this.Recipient.Trim()}」様専用に発行されたものです。");
                 }
                 else
                 {
@@ -224,7 +224,7 @@ namespace IPA.DN.FileCenter
 
     public class UploadFormRequest
     {
-        public string? Destination { get; set; }
+        public string? Recipient { get; set; }
         public string? UrlHint { get; set; }
         public bool Auth { get; set; }
         public bool Log { get; set; }
@@ -533,7 +533,7 @@ namespace IPA.DN.FileCenter
             // パスワード等を生成
             UploadResult result = new UploadResult
             {
-                Destination = option.Destination._NonNull(),
+                Recipient = option.Destination._NonNull(),
                 AllowOnlyOnce = option.Once,
             };
 
