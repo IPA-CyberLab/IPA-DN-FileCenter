@@ -99,22 +99,6 @@
 
             <div class="field is-horizontal">
                 <div class="field-label">
-                    <label class="label">アクセスログ確認機能の有効化:</label>
-                </div>
-                <div class="field-body">
-                    <div class="field is-narrow">
-                        <div class="control">
-                            <label class="checkbox">
-                                <input type="checkbox" name="log" value="true" @Model.Log._BoolToChecked()>
-                                <i class="fas fa-search"></i> 生成された URL へのアクセス試行やファイルのダウンロードのアクセスログの確認機能を有効にする
-                            </label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="field is-horizontal">
-                <div class="field-label">
                     <label class="label">暗号化 ZIP ファイルに変換:</label>
                 </div>
                 <div class="field-body">
@@ -148,7 +132,7 @@
                 <label class="label">その他のオプション:</label>
             </div>
 
-            <p>以下は、特に必要がある場合のみ指定してください。</p>
+            <p>以下は、特に必要がある場合のみ変更してください。</p>
 
             <div class="field is-horizontal">
                 <div class="field-label">
@@ -186,6 +170,24 @@
                     </div>
                 </div>
             </div>
+
+            <div class="field is-horizontal">
+                <div class="field-label">
+                    <label class="label">アクセスログ確認機能の有効化:</label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow">
+                        <div class="control">
+                            <label class="checkbox">
+                                <input type="checkbox" name="log" value="true" @Model.Log._BoolToChecked()>
+                                <i class="fas fa-search"></i> 生成された URL へのアクセス試行やファイルのダウンロードのアクセスログの確認機能を有効にする
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
             <p>　</p>
             <hr>
 
