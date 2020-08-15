@@ -56,7 +56,7 @@ namespace IPA.DN.FileCenter
             services.AddHttpRequestRateLimiter<HttpRequestRateLimiterHashKeys.SrcIPAddress>(_ => { });
 
             ////// Cookie 認証機能を追加
-            EasyCookieAuth.LoginFormMessage.TrySet(@"システム全体の設定を変更するには、ログインが必要です。初期パスワードは、「Local\App_IPA.DN.FileCenter\Config\AppSettings\WebServer.json」に記載されています。");
+            EasyCookieAuth.LoginFormMessage.TrySet(@"システム全体の設定を変更するには、ログインが必要です。初期パスワードは、「Local/App_IPA.DN.FileCenter/Config/AppSettings/WebServer.json」に記載されています。");
             EasyCookieAuth.AuthenticationPasswordValidator = StartupHelper.SimpleBasicAuthenticationPasswordValidator;
             EasyCookieAuth.ConfigureServices(services, !StartupHelper.ServerOptions.AutomaticRedirectToHttpsIfPossible);
 
