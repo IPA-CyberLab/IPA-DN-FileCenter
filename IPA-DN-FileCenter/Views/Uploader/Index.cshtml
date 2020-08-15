@@ -186,6 +186,18 @@
                     </div>
                 </div>
             </div>
+            <p>　</p>
+            <hr>
+
+            <div class="field">
+                <label class="label">コンピュータ技術者向け情報:</label>
+            </div>
+
+            <p>UNIX の curl コマンドを以下のように用いると、1 つまたは複数のファイルをコマンドラインからアップロードし、結果の JSON を受け取ることができ便利です。</p>
+            <button class="button is-success" style="font-weight: bold" onclick="CopyToClipboard(this); return false;"><i class="far fa-copy"></i>&nbsp;以下のコマンドラインをクリップボードにコピーする</button>
+            <div class="control">
+                <textarea class="textarea is-focused is-success" id="textbody" style="font-family: Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;" readonly>@ViewBag.curl</textarea>
+            </div>
         </div>
     </div>
 </form>
@@ -262,6 +274,15 @@
 
             updateDirDivVisible();
         }
+
+        function CopyToClipboard(btn)
+        {
+            btn.textContent = "クリップボードにコピーしました !";
+            btn.className = "button is-info";
+            document.getElementById("textbody").select();
+            document.execCommand('copy');
+        }
+
 
     </script>
 

@@ -134,6 +134,7 @@ namespace IPA.DN.FileCenter
         public string GeneratedUrlDir { get; set; } = "";
         public string GeneratedUrlDirAuthDirect { get; set; } = "";
         public string GeneratedUrlFirstFileDirect { get; set; } = "";
+        public string GeneratedUrlDirAuthCredentialDirect { get; set; } = "";
         public string GeneratedUrlFirstFileAuthCredentialDirect { get; set; } = "";
         public string? GeneratedUserName { get; set; }
         public string? GeneratedPassword { get; set; }
@@ -544,6 +545,7 @@ namespace IPA.DN.FileCenter
                 for (int i = 0; ; i++)
                 {
                     string yymmddAndSeqNoTmp = timeStamp.LocalDateTime.ToString("yyMMdd") + "_" + seqNo.ToString("D3");
+                    string yymmdd = yymmddAndSeqNoTmp._SliceHead(6);
 
                     int sizeOfRandStr = 16;
 
@@ -555,7 +557,7 @@ namespace IPA.DN.FileCenter
 
                     sizeOfRandStr = Math.Max(sizeOfRandStr, 8);
 
-                    string candidate = yymmddAndSeqNoTmp + "_";
+                    string candidate = yymmdd + "/" + yymmddAndSeqNoTmp + "_";
                     if (option.UrlHint._IsFilled())
                     {
                         candidate += option.UrlHint + "_";
@@ -573,15 +575,13 @@ namespace IPA.DN.FileCenter
                     else
                     {
                         // 決定 !!
-                        newDirName = candidate;
+                        newDirName = PP.GetFileName(candidate);
                         newDirFullPath = fullPath;
                         yymmddAndSeqNo = yymmddAndSeqNoTmp;
                         break;
                     }
                 }
             }
-
-            newDirFullPath._Debug();
 
             // パスワード等を生成
             UploadResult result = new UploadResult
@@ -716,6 +716,7 @@ namespace IPA.DN.FileCenter
                 if (option.Auth == false)
                 {
                     result.GeneratedUrlFirstFileAuthCredentialDirect = result.GeneratedUrlFirstFileDirect;
+                    result.GeneratedUrlDirAuthCredentialDirect = result.GeneratedUrlDirAuthDirect;
                 }
                 else
                 {
@@ -730,6 +731,20 @@ namespace IPA.DN.FileCenter
                     }
 
                     result.GeneratedUrlFirstFileAuthCredentialDirect = tmp;
+
+
+
+                    tmp = result.GeneratedUrlDirAuthDirect;
+                    if (tmp.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+                    {
+                        tmp = "http://" + result.GeneratedUserName + ":" + result.GeneratedPassword + "@" + tmp._Slice(7);
+                    }
+                    else if (tmp.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                    {
+                        tmp = "https://" + result.GeneratedUserName + ":" + result.GeneratedPassword + "@" + tmp._Slice(8);
+                    }
+
+                    result.GeneratedUrlDirAuthCredentialDirect = tmp;
                 }
 
                 secureJson.Normalize();
