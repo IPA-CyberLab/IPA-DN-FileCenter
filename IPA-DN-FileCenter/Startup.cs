@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -34,10 +34,10 @@ namespace IPA.DN.FileCenter
         {
             Configuration = configuration;
 
-            // HttpServer ƒwƒ‹ƒp[‚Ì‰Šú‰»
+            // HttpServer ãƒ˜ãƒ«ãƒ‘ãƒ¼ã®åˆæœŸåŒ–
             StartupHelper = new HttpServerStartupHelper(configuration);
 
-            // AspNetLib ‚Ì‰Šú‰»: •K—v‚È‹@”\‚Ì‚İ ON ‚É‚·‚é‚±‚Æ
+            // AspNetLib ã®åˆæœŸåŒ–: å¿…è¦ãªæ©Ÿèƒ½ã®ã¿ ON ã«ã™ã‚‹ã“ã¨
             AspNetLib = new AspNetLib(configuration, AspNetLibFeatures.EasyCookieAuth);
         }
 
@@ -46,53 +46,53 @@ namespace IPA.DN.FileCenter
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            // AspNetLib ‚É‚æ‚éİ’è‚ğ’Ç‰Á
+            // AspNetLib ã«ã‚ˆã‚‹è¨­å®šã‚’è¿½åŠ 
             AspNetLib.ConfigureServices(StartupHelper, services);
 
-            // Šî–{“I‚Èİ’è‚ğ’Ç‰Á
+            // åŸºæœ¬çš„ãªè¨­å®šã‚’è¿½åŠ 
             StartupHelper.ConfigureServices(services);
 
-            // ƒŠƒNƒGƒXƒg”§ŒÀ‹@”\‚ğ’Ç‰Á
+            // ãƒªã‚¯ã‚¨ã‚¹ãƒˆæ•°åˆ¶é™æ©Ÿèƒ½ã‚’è¿½åŠ 
             services.AddHttpRequestRateLimiter<HttpRequestRateLimiterHashKeys.SrcIPAddress>(_ => { });
 
-            ////// Cookie ”FØ‹@”\‚ğ’Ç‰Á
-            EasyCookieAuth.LoginFormMessage.TrySet(@"ƒVƒXƒeƒ€‘S‘Ì‚Ìİ’è‚ğ•ÏX‚·‚é‚É‚ÍAƒƒOƒCƒ“‚ª•K—v‚Å‚·B‰ŠúƒpƒXƒ[ƒh‚ÍAuLocal\App_IPA.DN.FileCenter\Config\AppSettings\WebServer.jsonv‚É‹LÚ‚³‚ê‚Ä‚¢‚Ü‚·B");
+            ////// Cookie èªè¨¼æ©Ÿèƒ½ã‚’è¿½åŠ 
+            EasyCookieAuth.LoginFormMessage.TrySet(@"ã‚·ã‚¹ãƒ†ãƒ å…¨ä½“ã®è¨­å®šã‚’å¤‰æ›´ã™ã‚‹ã«ã¯ã€ãƒ­ã‚°ã‚¤ãƒ³ãŒå¿…è¦ã§ã™ã€‚åˆæœŸãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰ã¯ã€ã€ŒLocal\App_IPA.DN.FileCenter\Config\AppSettings\WebServer.jsonã€ã«è¨˜è¼‰ã•ã‚Œã¦ã„ã¾ã™ã€‚");
             EasyCookieAuth.AuthenticationPasswordValidator = StartupHelper.SimpleBasicAuthenticationPasswordValidator;
             EasyCookieAuth.ConfigureServices(services, !StartupHelper.ServerOptions.AutomaticRedirectToHttpsIfPossible);
 
-            // Razor ƒy[ƒW‚ğ’Ç‰Á
+            // Razor ãƒšãƒ¼ã‚¸ã‚’è¿½åŠ 
             services.AddRazorPages();
 
-            // MVC ‹@”\‚ğ’Ç‰Á
+            // MVC æ©Ÿèƒ½ã‚’è¿½åŠ 
             services.AddControllersWithViews()
                 .ConfigureMvcWithAspNetLib(AspNetLib);
 
-            // FileCenter ƒT[ƒo[‚Ì‰Šú‰»
+            // FileCenter ã‚µãƒ¼ãƒãƒ¼ã®åˆæœŸåŒ–
             this.FileCenterServer = new Server();
 
-            // ƒVƒ“ƒOƒ‹ƒgƒ“ƒT[ƒrƒX‚Ì’“ü
+            // ã‚·ãƒ³ã‚°ãƒ«ãƒˆãƒ³ã‚µãƒ¼ãƒ“ã‚¹ã®æ³¨å…¥
             services.AddSingleton(this.FileCenterServer);
 
-            // ‘Sƒy[ƒW‹¤’ÊƒRƒ“ƒeƒLƒXƒg‚Ì’“ü
+            // å…¨ãƒšãƒ¼ã‚¸å…±é€šã‚³ãƒ³ãƒ†ã‚­ã‚¹ãƒˆã®æ³¨å…¥
             services.AddScoped<PageContext>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHostApplicationLifetime lifetime)
         {
-            // ƒŠƒNƒGƒXƒg”§ŒÀ
+            // ãƒªã‚¯ã‚¨ã‚¹ãƒˆæ•°åˆ¶é™
             app.UseHttpRequestRateLimiter<HttpRequestRateLimiterHashKeys.SrcIPAddress>();
 
-            // wwwroot ƒfƒBƒŒƒNƒgƒŠ‚ğ static ƒtƒ@ƒCƒ‹‚Ìƒ‹[ƒg‚Æ‚µ‚Ä’Ç‰Á
+            // wwwroot ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’ static ãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ«ãƒ¼ãƒˆã¨ã—ã¦è¿½åŠ 
             StartupHelper.AddStaticFileProvider(Env.AppRootDir._CombinePath("wwwroot"));
 
-            // AspNetLib ‚É‚æ‚éİ’è‚ğ’Ç‰Á
+            // AspNetLib ã«ã‚ˆã‚‹è¨­å®šã‚’è¿½åŠ 
             AspNetLib.Configure(StartupHelper, app, env);
 
-            // Šî–{“I‚Èİ’è‚ğ’Ç‰Á
+            // åŸºæœ¬çš„ãªè¨­å®šã‚’è¿½åŠ 
             StartupHelper.Configure(app, env);
 
-            // ƒGƒ‰[ƒy[ƒW‚ğ’Ç‰Á
+            // ã‚¨ãƒ©ãƒ¼ãƒšãƒ¼ã‚¸ã‚’è¿½åŠ 
             if (StartupHelper.IsDevelopmentMode)
             {
                 app.UseDeveloperExceptionPage();
@@ -102,20 +102,20 @@ namespace IPA.DN.FileCenter
                 app.UseExceptionHandler("/Uploader/Error");
             }
 
-            // ƒGƒ‰[ƒƒO‚ğ’Ç‰Á
+            // ã‚¨ãƒ©ãƒ¼ãƒ­ã‚°ã‚’è¿½åŠ 
             app.UseHttpExceptionLogger();
 
-            // Static ƒtƒ@ƒCƒ‹‚ğ’Ç‰Á
+            // Static ãƒ•ã‚¡ã‚¤ãƒ«ã‚’è¿½åŠ 
             app.UseStaticFiles();
 
-            // ƒ‹[ƒeƒBƒ“ƒO‚ğ—LŒø‰Â (”FØ‚ğ—˜—p‚·‚éê‡‚Í”FØ‘O‚ÉŒÄ‚Ño‚·•K—v‚ª‚ ‚é)
+            // ãƒ«ãƒ¼ãƒ†ã‚£ãƒ³ã‚°ã‚’æœ‰åŠ¹å¯ (èªè¨¼ã‚’åˆ©ç”¨ã™ã‚‹å ´åˆã¯èªè¨¼å‰ã«å‘¼ã³å‡ºã™å¿…è¦ãŒã‚ã‚‹)
             app.UseRouting();
 
-            // ”FØE”F‰Â‚ğÀ{
+            // èªè¨¼ãƒ»èªå¯ã‚’å®Ÿæ–½
             app.UseAuthentication();
             app.UseAuthorization();
 
-            // ƒ‹[ƒgƒ}ƒbƒv‚ğ’è‹`
+            // ãƒ«ãƒ¼ãƒˆãƒãƒƒãƒ—ã‚’å®šç¾©
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(
@@ -123,7 +123,7 @@ namespace IPA.DN.FileCenter
                     pattern: "{controller=Uploader}/{action=Index}/{id?}");
             });
 
-            // ƒNƒŠ[ƒ“ƒAƒbƒv“®ì‚ğ’è‹`
+            // ã‚¯ãƒªãƒ¼ãƒ³ã‚¢ãƒƒãƒ—å‹•ä½œã‚’å®šç¾©
             lifetime.ApplicationStopping.Register(() =>
             {
                 this.FileCenterServer._DisposeSafe();
