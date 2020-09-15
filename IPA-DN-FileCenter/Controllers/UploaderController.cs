@@ -47,7 +47,7 @@ namespace IPA.DN.FileCenter.Controllers
             string baseUrl = Request.GetDisplayUrl()._ParseUrl()._CombineUrl("/").ToString();
 
             string curlCmdLine =
-                $"$ curl -f -F \"pin={currentPin}\" -F \"json=true\" -F \"getfile=false\" -F \"getdir=false\" -F \"days=0\" -F \"auth=false\" -F \"log=true\" -F \"once=false\" -F \"urlhint=testfile\" -F \"zip=false\" -F \"file=@送信ファイル１\" -F \"file=@送信ファイル２\" -F \"file=@送信ファイル３\" {baseUrl}Uploader/Upload";
+                $"$ curl {baseUrl}Uploader/Upload -f -F \"pin={currentPin}\" -F \"json=true\" -F \"getfile=false\" -F \"getdir=false\" -F \"days=0\" -F \"auth=false\" -F \"log=true\" -F \"once=false\" -F \"urlhint=testfile\" -F \"zip=false\" -F \"file=@送信ファイル１\" -F \"file=@送信ファイル２\"";
 
             ViewBag.curl = curlCmdLine;
 
