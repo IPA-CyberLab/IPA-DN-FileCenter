@@ -265,6 +265,7 @@ namespace IPA.DN.FileCenter
     {
         public string? Recipient { get; set; }
         public string? UrlHint { get; set; }
+        public bool VeryShort { get; set; }
         public bool Auth { get; set; }
         public bool Log { get; set; }
         public bool Zip { get; set; }
@@ -379,6 +380,7 @@ namespace IPA.DN.FileCenter
         public string? PIN { get; set; }
         public string? Destination { get; set; }
         public string? UrlHint { get; set; }
+        public bool VeryShort { get; set; }
         public bool Auth { get; set; }
         public bool LogAccess { get; set; }
         public bool Zip { get; set; }
@@ -544,6 +546,11 @@ namespace IPA.DN.FileCenter
 
                 for (int i = 0; ; i++)
                 {
+                    if (i >= 10000)
+                    {
+                        throw new CoresLibException("Too many retries: i >= 10000");
+                    }
+
                     string yymmddAndSeqNoTmp = timeStamp.LocalDateTime.ToString("yyMMdd") + "_" + seqNo.ToString("D3");
                     string yymmdd = yymmddAndSeqNoTmp._SliceHead(6);
 
@@ -563,7 +570,17 @@ namespace IPA.DN.FileCenter
                         candidate += option.UrlHint + "_";
                     }
 
-                    candidate += Str.GenRandPassword(sizeOfRandStr, false).ToLower();
+                    if (option.VeryShort == false)
+                    {
+                        candidate += Str.GenRandPassword(sizeOfRandStr, false).ToLower();
+                    }
+                    else
+                    {
+                        for (int j = 0; j < 5; j++)
+                        {
+                            candidate += (char)((int)'0' + Secure.RandSInt31() % 10);
+                        }
+                    }
 
                     string fullPath = PP.Combine(this.RootDirectoryFullPath, candidate);
 
@@ -601,14 +618,14 @@ namespace IPA.DN.FileCenter
 
             if (option.Auth)
             {
-                result.GeneratedUserName = "user" + yymmddAndSeqNo._ReplaceStr("_", "");
-                result.GeneratedPassword = "pass" + Str.GenRandPassword(24, false);
+                result.GeneratedUserName = "u" + yymmddAndSeqNo._ReplaceStr("_", "");
+                result.GeneratedPassword = "p" + Str.GenRandPassword(option.VeryShort ? 6 : 24, false);
                 authSubDirName = "auth" + Str.GenRandNumericPassword(7);
             }
 
             if (option.Zip)
             {
-                result.GeneratedZipPassword = "zip" + Str.GenRandPassword(32, false);
+                result.GeneratedZipPassword = "zip" + Str.GenRandPassword(option.VeryShort ? 6 : 32, false);
                 result.IsZipped = true;
             }
 

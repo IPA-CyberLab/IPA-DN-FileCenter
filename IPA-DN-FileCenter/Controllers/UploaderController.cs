@@ -121,6 +121,7 @@ namespace IPA.DN.FileCenter.Controllers
                 LogAccess = form.Log,
                 Once = form.Once,
                 UrlHint = form.UrlHint,
+                VeryShort = form.VeryShort,
                 Zip = form.Zip,
                 PIN = this._EasyLoadCookie<string>("pin")._NonNullTrim(),
             };
