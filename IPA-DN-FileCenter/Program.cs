@@ -30,7 +30,7 @@ namespace IPA.DN.FileCenter
                 {
                     HttpPortsList = 80._SingleList(),
                     HttpsPortsList = 443._SingleList(),
-                    UseKestrelWithIPACoreStack = true,
+                    UseKestrelWithIPACoreStack = false,
                     DebugKestrelToConsole = false,
                     UseSimpleBasicAuthentication = false,
                     HoldSimpleBasicAuthenticationDatabase = true,
