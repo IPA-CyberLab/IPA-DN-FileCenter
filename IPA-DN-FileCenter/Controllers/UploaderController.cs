@@ -137,6 +137,7 @@ namespace IPA.DN.FileCenter.Controllers
                 //Once = form.Once,
                 //Days = form.Days,
                 Zip = form.Zip,
+                VeryShort = form.VeryShort,
             };
 
             this._EasySaveCookie("uploadForm", cookie);

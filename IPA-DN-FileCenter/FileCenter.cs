@@ -339,6 +339,8 @@ namespace IPA.DN.FileCenter
         //public bool Once { get; set; } = false;
         //public int Days { get; set; } = 0;
         public string Email { get; set; } = "";
+        public bool InboxForcePrefixYymmdd { get; set; } = false;
+        public bool VeryShort { get; set; } = false;
     }
 
     public class UploadFormRequest
@@ -353,6 +355,7 @@ namespace IPA.DN.FileCenter
         public int Days { get; set; }
 
         public string? Email { get; set; }
+        public bool InboxForcePrefixYymmdd { get; set; }
 
         public string? dirname_1 { get; set; }
         public string? dirname_2 { get; set; }
@@ -460,6 +463,10 @@ namespace IPA.DN.FileCenter
     public class UploadOption : INormalizable
     {
         public bool IsInboxCreateMode { get; set; }
+        public bool IsInboxUploadMode { get; set; }
+        public bool InboxForcePrefixYymmdd { get; set; }
+        public string InboxId { get; set; } = "";
+        public string InboxUploadPassword { get; set; } = "";
 
         public string? PIN { get; set; }
         public string? Destination { get; set; }
@@ -495,6 +502,10 @@ namespace IPA.DN.FileCenter
             if (this.Days > 2555000) this.Days = 2555000;
 
             this.IpAddress = this.IpAddress._NonNull();
+
+            this.Email = this.Email._NonNullTrim();
+            this.InboxId = this.InboxId._NonNullTrim();
+            this.InboxUploadPassword = this.InboxUploadPassword._NonNullTrim();
         }
     }
 
@@ -566,6 +577,7 @@ namespace IPA.DN.FileCenter
         }
 
         readonly AsyncLock DirectoryLock = new AsyncLock();
+        readonly NamedAsyncLocks NamedDirectoryLocks = new NamedAsyncLocks(StrComparer.IgnoreCaseTrimComparer);
 
         // アップロードメイン処理
         public async Task<UploadResult> UploadAsync(DateTimeOffset timeStamp, string ipAddress, string baseUrl, UploadFileList fileList, UploadOption option, CancellationToken cancel = default)
@@ -576,17 +588,24 @@ namespace IPA.DN.FileCenter
             string newDirFullPath;
             string yymmddAndSeqNo;
 
+            string forcedPrefixDirName = "";
+
             string authSubDirName = "";
             string firstFileRelativeName = "";
+
+            LogBrowserSecureJson? existingSecureJson = null;
 
             Uri baseUri = baseUrl._ParseUrl();
 
             // PIN コードチェック
-            string? currentPin = DbSnapshot.PIN;
-            if (currentPin._IsFilled() && currentPin._IsSame(option.PIN) == false)
+            if (option.IsInboxUploadMode == false)
             {
-                // PIN コード不正
-                throw new CoresException("Incorrect PIN code.");
+                string? currentPin = DbSnapshot.PIN;
+                if (currentPin._IsFilled() && currentPin._IsSame(option.PIN) == false)
+                {
+                    // PIN コード不正
+                    throw new CoresException("Incorrect PIN code.");
+                }
             }
 
             if (option.IsInboxCreateMode == false)
@@ -608,6 +627,26 @@ namespace IPA.DN.FileCenter
             foreach (var file in fileList.FileList)
             {
                 totalStreamSize += file.Stream.Length;
+
+                string fn = PPWin.GetFileName(file.RelativeFileName);
+
+                foreach (string token in PPWin.SplitTokens(file.RelativeFileName))
+                {
+                    if (token._NonNullTrim()._IsSamei(Consts.FileNames.LogBrowserAccessLogDirName))
+                    {
+                        throw new CoresException($"Incorrect directory or filename.");
+                    }
+
+                    if (token._NonNullTrim()._IsSamei(Consts.FileNames.LogBrowserSecureJson))
+                    {
+                        throw new CoresException($"Incorrect directory or filename.");
+                    }
+
+                    if (token._NonNullTrim()._IsSamei(Consts.FileNames.LogBrowserHistoryDirName))
+                    {
+                        throw new CoresException($"Incorrect directory or filename.");
+                    }
+                }
             }
 
             if (totalStreamSize > DbSnapshot.UploadSizeLimit)
@@ -616,76 +655,132 @@ namespace IPA.DN.FileCenter
                 throw new CoresException($"Max uploadable files total size is {DbSnapshot.UploadSizeLimit._GetFileSizeStr()}. You attempted to upload {totalStreamSize._GetFileSizeStr()}.");
             }
 
-            using (await DirectoryLock.LockWithAwait(cancel))
+            if (option.IsInboxUploadMode == false)
             {
-                int seqNo;
-
-                lock (this.DbLock)
+                // 通常モード または受信トレイ作成モードの場合は、新しいディレクトリ名を決定する
+                using (await DirectoryLock.LockWithAwait(cancel))
                 {
-                    if (this.Db.LastUploadDateTime.LocalDateTime.Date != timeStamp.LocalDateTime.Date)
+                    int seqNo;
+
+                    lock (this.DbLock)
                     {
-                        // 日が変わった
-                        this.Db.LastSeqNo = 0;
-                    }
-                    this.Db.LastUploadDateTime = timeStamp;
-
-                    // 連番をインクリメントいたします
-                    seqNo = ++this.Db.LastSeqNo;
-                }
-
-                for (int i = 0; ; i++)
-                {
-                    if (i >= 10000)
-                    {
-                        throw new CoresLibException("Too many retries: i >= 10000");
-                    }
-
-                    string yymmddAndSeqNoTmp = timeStamp.LocalDateTime.ToString("yyMMdd") + "_" + seqNo.ToString("D3");
-                    string yymmdd = yymmddAndSeqNoTmp._SliceHead(6);
-
-                    int sizeOfRandStr = 16;
-
-                    // ユニークなルートディレクトリ名を決定する
-                    if (option.UrlHint._IsFilled())
-                    {
-                        sizeOfRandStr = 16 - option.UrlHint.Length - 1;
-                    }
-
-                    sizeOfRandStr = Math.Max(sizeOfRandStr, 8);
-
-                    string candidate = yymmdd + "/" + yymmddAndSeqNoTmp + "_";
-                    if (option.UrlHint._IsFilled())
-                    {
-                        candidate += option.UrlHint + "_";
-                    }
-
-                    if (option.VeryShort == false)
-                    {
-                        candidate += Str.GenRandPassword(sizeOfRandStr, false).ToLower();
-                    }
-                    else
-                    {
-                        for (int j = 0; j < 5; j++)
+                        if (this.Db.LastUploadDateTime.LocalDateTime.Date != timeStamp.LocalDateTime.Date)
                         {
-                            candidate += (char)((int)'0' + Secure.RandSInt31() % 10);
+                            // 日が変わった
+                            this.Db.LastSeqNo = 0;
+                        }
+                        this.Db.LastUploadDateTime = timeStamp;
+
+                        // 連番をインクリメントいたします
+                        seqNo = ++this.Db.LastSeqNo;
+                    }
+
+                    for (int i = 0; ; i++)
+                    {
+                        if (i >= 10000)
+                        {
+                            throw new CoresLibException("Too many retries: i >= 10000");
+                        }
+
+                        string yymmddAndSeqNoTmp = timeStamp.LocalDateTime.ToString("yyMMdd") + "_" + seqNo.ToString("D3");
+                        string yymmdd = yymmddAndSeqNoTmp._SliceHead(6);
+
+                        int sizeOfRandStr = 16;
+
+                        // ユニークなルートディレクトリ名を決定する
+                        if (option.UrlHint._IsFilled())
+                        {
+                            sizeOfRandStr = 16 - option.UrlHint.Length - 1;
+                        }
+
+                        sizeOfRandStr = Math.Max(sizeOfRandStr, 8);
+
+                        string candidate = yymmdd + "/" + yymmddAndSeqNoTmp + "_";
+                        if (option.UrlHint._IsFilled())
+                        {
+                            candidate += option.UrlHint + "_";
+                        }
+
+                        if (option.VeryShort == false)
+                        {
+                            candidate += Str.GenRandPassword(sizeOfRandStr, false).ToLower();
+                        }
+                        else
+                        {
+                            for (int j = 0; j < 5; j++)
+                            {
+                                candidate += (char)((int)'0' + Secure.RandSInt31() % 10);
+                            }
+                        }
+
+                        string fullPath = PP.Combine(this.RootDirectoryFullPath, candidate);
+
+                        if (await Lfs.IsDirectoryExistsAsync(fullPath, cancel) ||
+                            await Lfs.IsFileExistsAsync(fullPath, cancel))
+                        {
+                            // すでに存在する
+                        }
+                        else
+                        {
+                            // 決定 !!
+                            newDirName = PP.GetFileName(candidate);
+                            newDirFullPath = fullPath;
+                            yymmddAndSeqNo = yymmddAndSeqNoTmp;
+                            break;
                         }
                     }
+                }
+            }
+            else
+            {
+                // 受信トレイへのファイルアップロード要求の場合は、指定された受信トレイ ID をもとに物理ディレクトリにアクセスする
+                string safeInboxId = PathParser.Windows.MakeSafeFileName(option.InboxId.Trim());
+                string testDirFullPath = PP.Combine(this.RootDirectoryFullPath, safeInboxId.Substring(0, 6), safeInboxId);
+                string testSecureJsonFullPath = PP.Combine(testDirFullPath, Consts.FileNames.LogBrowserSecureJson);
 
-                    string fullPath = PP.Combine(this.RootDirectoryFullPath, candidate);
+                if (await Lfs.IsDirectoryExistsAsync(testDirFullPath, cancel) == false ||
+                    await Lfs.IsFileExistsAsync(testSecureJsonFullPath, cancel) == false)
+                {
+                    throw new CoresException("指定されたアップロード用 URL が不正です。電子メール等で URL を受け取った場合は、URL に自動的に改行等が入っていないかどうかご確認ください。改行が自動的に挿入されてしまっている場合は、改行をまたいで URL を連結し、もう一度アクセスしてみてください。(1)");
+                }
 
-                    if (await Lfs.IsDirectoryExistsAsync(fullPath, cancel) ||
-                        await Lfs.IsFileExistsAsync(fullPath, cancel))
+                // _secure.json を読み込んでみる
+                existingSecureJson = await Lfs.ReadJsonFromFileAsync<LogBrowserSecureJson>(testSecureJsonFullPath, cancel: cancel);
+
+                if (existingSecureJson.IsInbox == false)
+                {
+                    throw new CoresException("Security error !! The specified URL is not an inbox.");
+                }
+
+                if (existingSecureJson.InboxUploadPassword._IsEmpty() || existingSecureJson.InboxUploadPassword != option.InboxUploadPassword)
+                {
+                    throw new CoresException("指定されたアップロード用 URL が不正です。電子メール等で URL を受け取った場合は、URL に自動的に改行等が入っていないかどうかご確認ください。改行が自動的に挿入されてしまっている場合は、改行をまたいで URL を連結し、もう一度アクセスしてみてください。(2)");
+                }
+
+                yymmddAndSeqNo = "";
+
+                newDirFullPath = testDirFullPath;
+                newDirName = PP.GetFileName(testDirFullPath);
+
+                if (existingSecureJson.InboxForcePrefixYymmdd)
+                {
+                    // prefix ディレクトリ名を強制的に付けるオプションが有効である
+                    string prefixYymmdd = timeStamp.LocalDateTime.ToString("yyyyMMdd_HHmmss");
+
+                    string hostNameOrIp = await LocalNet.GetHostNameSingleOrIpAsync(ipAddress, cancel);
+
+                    string tmp;
+
+                    if (hostNameOrIp._IsSamei(ipAddress))
                     {
-                        // すでに存在する
+                        tmp = $"{prefixYymmdd}_" + ipAddress;
                     }
                     else
                     {
-                        // 決定 !!
-                        newDirName = PP.GetFileName(candidate);
-                        newDirFullPath = fullPath;
-                        yymmddAndSeqNo = yymmddAndSeqNoTmp;
-                        break;
+                        tmp = $"{prefixYymmdd}_" + ipAddress + "_" + hostNameOrIp;
                     }
+
+                    forcedPrefixDirName = PP.MakeSafeFileName(tmp);
                 }
             }
 
@@ -696,36 +791,44 @@ namespace IPA.DN.FileCenter
                 AllowOnlyOnce = option.Once,
             };
 
-            if (option.Days <= 0)
+            if (option.IsInboxUploadMode == false)
             {
-                result.Expires = Util.MaxDateTimeOffsetValue;
-            }
-            else
-            {
-                result.Expires = timeStamp.LocalDateTime.Date.AddDays(option.Days).AddDays(1).AddTicks(-1)._AsDateTimeOffset(true);
-            }
+                if (option.Days <= 0)
+                {
+                    result.Expires = Util.MaxDateTimeOffsetValue;
+                }
+                else
+                {
+                    result.Expires = timeStamp.LocalDateTime.Date.AddDays(option.Days).AddDays(1).AddTicks(-1)._AsDateTimeOffset(true);
+                }
 
-            if (option.Auth)
-            {
-                result.GeneratedUserName = "u" + yymmddAndSeqNo._ReplaceStr("_", "");
-                result.GeneratedPassword = "p" + Str.GenRandPassword(option.VeryShort ? 6 : 24, false);
-                authSubDirName = "auth" + Str.GenRandNumericPassword(7);
-            }
+                if (option.Auth)
+                {
+                    result.GeneratedUserName = "u" + yymmddAndSeqNo._ReplaceStr("_", "");
+                    result.GeneratedPassword = "p" + Str.GenRandPassword((option.VeryShort && option.IsInboxCreateMode == false) ? 6 : 24, false);
+                    authSubDirName = "auth" + Str.GenRandNumericPassword(7);
+                }
 
-            if (option.Zip)
-            {
-                result.GeneratedZipPassword = "zip" + Str.GenRandPassword(option.VeryShort ? 6 : 32, false);
-                result.IsZipped = true;
+                if (option.Zip)
+                {
+                    result.GeneratedZipPassword = "zip" + Str.GenRandPassword(option.VeryShort ? 6 : 32, false);
+                    result.IsZipped = true;
+                }
             }
 
             if (option.IsInboxCreateMode)
             {
-                result.GeneratedInboxUploadPassword = (option.VeryShort ? Str.GenRandNumericPasswordWithBlocks() : Str.GenRandPassword(24, false)).ToLower();
+                result.GeneratedInboxUploadPassword = (option.VeryShort ? Str.GenRandNumericPasswordWithBlocks(4, 3) : Str.GenRandPassword(24, false)).ToLower();
                 result.IsCreatingUploadInbox = true;
             }
 
             // ディレクトリ作成
-            await Lfs.CreateDirectoryAsync(newDirFullPath, cancel: cancel);
+            if (option.IsInboxUploadMode == false)
+            {
+                await Lfs.CreateDirectoryAsync(newDirFullPath, cancel: cancel);
+
+                await Lfs.SetDirectoryMetadataAsync(newDirFullPath, new FileMetadata(timeStamp), cancel);
+            }
 
             long totalSize = 0;
 
@@ -733,25 +836,72 @@ namespace IPA.DN.FileCenter
 
             try
             {
-                if (option.Zip == false)
+                using var dirLock = await NamedDirectoryLocks.LockWithAwait(newDirFullPath, cancel); // ユニークなディレクトリ名単位でロックする (受信トレイアップロードモードで競合読み書きが発生しないように)
+
+                if (option.Zip == false || option.IsInboxUploadMode)
                 {
                     // 暗号化 ZIP なしの場合、アップロードされてきたファイルを生ファイルシステムにそのまま書いていく
                     foreach (var file in fileList.FileList)
                     {
-                        if (firstFileName._IsEmpty()) firstFileName = PPWin.GetFileName(file.RelativeFileName);
+                        string relativeFileName = file.RelativeFileName;
 
-                        string newFileFullPath = Lfs.PP.Combine(newDirFullPath, file.RelativeFileName);
+                        if (forcedPrefixDirName._IsFilled())
+                        {
+                            relativeFileName = PP.Combine(forcedPrefixDirName, relativeFileName);
+                        }
+
+                        if (firstFileName._IsEmpty()) firstFileName = PPWin.GetFileName(relativeFileName);
+
+                        string newFileFullPath = Lfs.PP.Combine(newDirFullPath, relativeFileName);
                         if (option.Auth)
                         {
                             newFileFullPath += Consts.Extensions.EncryptedXtsAes256;
                         }
 
-                        using var newFileObj = await Lfs.CreateAsync(newFileFullPath, flags: FileFlags.AutoCreateDirectory, cancel: cancel);
-                        using Stream newFileStream = option.Auth == false ? (Stream)newFileObj.GetStream(true) : new XtsAesRandomAccess(newFileObj, result.GeneratedPassword!, true).GetStream(true);
-                        totalSize += await file.Stream.CopyBetweenStreamAsync(newFileStream, cancel: cancel, flush: true);
+                        if (option.IsInboxUploadMode)
+                        {
+                            if (await Lfs.IsFileExistsAsync(newFileFullPath, cancel))
+                            {
+                                // 受信トレイアップロードモードの場合、アップロード先ファイルがすでに存在する場合は履歴フォルダを作成して移動する
+                                var existingFileMetadata = await Lfs.GetFileMetadataAsync(newFileFullPath, cancel: cancel);
 
-                        if (firstFileRelativeName._IsEmpty())
-                            firstFileRelativeName = file.RelativeFileName;
+                                // 新しい履歴ファイルパスの作成
+                                // まず、既存ファイルの更新日時を取得
+                                DateTimeOffset existingTimeStamp = existingFileMetadata.LastWriteTime!.Value;
+
+                                // ふさわしいディレクトリ名を決定
+                                string existingYymmdd = existingTimeStamp.LocalDateTime.ToString("yyyyMMdd_HHmmss");
+
+                                string subDirName = PP.Combine(Consts.FileNames.LogBrowserHistoryDirName, existingYymmdd);
+
+                                string historyDirBaseName = PP.Combine(newDirFullPath, subDirName);
+                                string historyFileFullName = PP.Combine(historyDirBaseName, file.RelativeFileName);
+                                string historyDirFullName = PP.GetDirectoryName(historyFileFullName);
+
+                                await Lfs.CreateDirectoryAsync(historyDirFullName, cancel: cancel);
+
+                                await Lfs.MoveFileAsync(newFileFullPath, historyFileFullName, cancel);
+
+                                await Lfs.SetFileMetadataAsync(historyFileFullName, new FileMetadata(existingTimeStamp), cancel);
+
+                                await Lfs.SetDirectoryMetadataAsync(historyDirFullName, new FileMetadata(existingTimeStamp), cancel);
+                                await Lfs.SetDirectoryMetadataAsync(historyDirBaseName, new FileMetadata(existingTimeStamp), cancel);
+                                await Lfs.SetDirectoryMetadataAsync(PP.GetDirectoryName(historyDirBaseName), new FileMetadata(timeStamp), cancel);
+                            }
+                        }
+
+                        using (var newFileObj = await Lfs.CreateAsync(newFileFullPath, flags: FileFlags.AutoCreateDirectory, cancel: cancel))
+                        {
+                            using Stream newFileStream = option.Auth == false ? (Stream)newFileObj.GetStream(true) : new XtsAesRandomAccess(newFileObj, result.GeneratedPassword!, true).GetStream(true);
+                            totalSize += await file.Stream.CopyBetweenStreamAsync(newFileStream, cancel: cancel, flush: true);
+
+                            if (firstFileRelativeName._IsEmpty())
+                                firstFileRelativeName = file.RelativeFileName;
+                        }
+
+                        await Lfs.SetFileMetadataAsync(newFileFullPath, new FileMetadata(timeStamp), cancel);
+
+                        await Lfs.SetDirectoryMetadataAsync(PP.GetDirectoryName(newFileFullPath), new FileMetadata(timeStamp), cancel);
                     }
                 }
                 else
@@ -764,25 +914,31 @@ namespace IPA.DN.FileCenter
                         zipFileFullPath += Consts.Extensions.EncryptedXtsAes256;
                     }
 
-                    using var zipOutputFile = await Lfs.CreateAsync(zipFileFullPath, flags: FileFlags.AutoCreateDirectory, cancel: cancel);
-                    using IRandomAccess<byte> zipOutputFileRandomAccess = option.Auth == false ? (IRandomAccess<byte>)zipOutputFile : new XtsAesRandomAccess(zipOutputFile, result.GeneratedPassword!, true);
-                    using var zipWriter = new ZipWriter(new ZipContainerOptions(zipOutputFileRandomAccess));
-
-                    foreach (var file in fileList.FileList)
+                    using (var zipOutputFile = await Lfs.CreateAsync(zipFileFullPath, flags: FileFlags.AutoCreateDirectory, cancel: cancel))
                     {
-                        if (firstFileName._IsEmpty()) firstFileName = Lfs.PP.GetFileName(file.RelativeFileName);
+                        using IRandomAccess<byte> zipOutputFileRandomAccess = option.Auth == false ? (IRandomAccess<byte>)zipOutputFile : new XtsAesRandomAccess(zipOutputFile, result.GeneratedPassword!, true);
+                        using var zipWriter = new ZipWriter(new ZipContainerOptions(zipOutputFileRandomAccess));
 
-                        var metadata = new FileMetadata(attributes: FileAttributes.Normal, creationTime: timeStamp, lastWriteTime: timeStamp, lastAccessTime: timeStamp);
+                        foreach (var file in fileList.FileList)
+                        {
+                            if (firstFileName._IsEmpty()) firstFileName = Lfs.PP.GetFileName(file.RelativeFileName);
 
-                        totalSize += await zipWriter.ImportVirtualFileAsync(file.Stream,
-                            new FileContainerEntityParam(file.RelativeFileName, metadata,
-                                FileContainerEntityFlags.EnableCompression | FileContainerEntityFlags.CompressionMode_Fast,
-                                encryptPassword: result.GeneratedZipPassword,
-                                encoding: file.RelativeFileName._GetBestSuitableEncoding()
-                            ), cancel);
+                            var metadata = new FileMetadata(attributes: FileAttributes.Normal, creationTime: timeStamp, lastWriteTime: timeStamp, lastAccessTime: timeStamp);
+
+                            totalSize += await zipWriter.ImportVirtualFileAsync(file.Stream,
+                                new FileContainerEntityParam(file.RelativeFileName, metadata,
+                                    FileContainerEntityFlags.EnableCompression | FileContainerEntityFlags.CompressionMode_Fast,
+                                    encryptPassword: result.GeneratedZipPassword,
+                                    encoding: file.RelativeFileName._GetBestSuitableEncoding()
+                                ), cancel);
+                        }
+
+                        await zipWriter.FinishAsync(cancel);
                     }
 
-                    await zipWriter.FinishAsync(cancel);
+                    await Lfs.SetFileMetadataAsync(zipFileFullPath, new FileMetadata(timeStamp), cancel);
+
+                    await Lfs.SetDirectoryMetadataAsync(PP.GetDirectoryName(zipFileFullPath), new FileMetadata(timeStamp), cancel);
 
                     firstFileRelativeName = zipFileName;
                 }
@@ -792,38 +948,50 @@ namespace IPA.DN.FileCenter
 
                 result.FirstFileNameForPrint = firstFileName;
 
-                if (totalSize > DbSnapshot.UploadSizeLimit)
+                if (option.IsInboxUploadMode == false)
                 {
-                    // ファイルサイス超過
-                    throw new CoresException($"Max uploadable files total size is {DbSnapshot.UploadSizeLimit._GetFileSizeStr()}. You attempted to upload {totalStreamSize._GetFileSizeStr()}.");
+                    if (totalSize > DbSnapshot.UploadSizeLimit)
+                    {
+                        // ファイルサイス超過
+                        throw new CoresException($"Max uploadable files total size is {DbSnapshot.UploadSizeLimit._GetFileSizeStr()}. You attempted to upload {totalStreamSize._GetFileSizeStr()}.");
+                    }
                 }
 
-                // _secure.json ファイルを出力する
-                LogBrowserSecureJson secureJson = new LogBrowserSecureJson
+                if (option.IsInboxUploadMode == false)
                 {
-                    AuthRequired = option.Auth,
-                    AuthSubject = option.Destination._NonNull(),
-                    Expires = result.Expires,
-                    DisableAccessLog = false,
-                    AllowAccessToAccessLog = option.LogAccess,
-                    UploadTimeStamp = timeStamp,
-                    UploadIp = ipAddress,
-                    AllowOnlyOnce = option.Once,
-                    TotalFileSize = result.TotalFileSize,
-                    NumFiles = result.NumFiles,
-                };
+                    // _secure.json ファイルを出力する
+                    LogBrowserSecureJson secureJson = new LogBrowserSecureJson
+                    {
+                        AuthRequired = option.Auth,
+                        AuthSubject = option.Destination._NonNull(),
+                        Expires = result.Expires,
+                        DisableAccessLog = false,
+                        AllowAccessToAccessLog = option.LogAccess,
+                        UploadTimeStamp = timeStamp,
+                        UploadIp = ipAddress,
+                        AllowOnlyOnce = option.Once,
+                        TotalFileSize = result.TotalFileSize,
+                        NumFiles = result.NumFiles,
+                        InboxEmail = option.Email,
+                    };
 
-                if (option.IsInboxCreateMode)
-                {
-                    secureJson.IsInbox = true;
-                    secureJson.InboxUploadPassword = result.GeneratedInboxUploadPassword!;
-                }
+                    if (option.IsInboxCreateMode)
+                    {
+                        secureJson.IsInbox = true;
+                        secureJson.InboxUploadPassword = result.GeneratedInboxUploadPassword!;
+                        secureJson.InboxForcePrefixYymmdd = option.InboxForcePrefixYymmdd;
+                    }
 
-                if (option.Auth)
-                {
-                    secureJson.AuthDatabase = new KeyValueList<string, string>();
-                    secureJson.AuthDatabase.Add(result.GeneratedUserName!, Secure.SaltPassword(result.GeneratedPassword!));
-                    secureJson.AuthSubDirName = authSubDirName;
+                    if (option.Auth)
+                    {
+                        secureJson.AuthDatabase = new KeyValueList<string, string>();
+                        secureJson.AuthDatabase.Add(result.GeneratedUserName!, Secure.SaltPassword(result.GeneratedPassword!));
+                        secureJson.AuthSubDirName = authSubDirName;
+                    }
+
+                    secureJson.Normalize();
+
+                    await Lfs.WriteJsonToFileAsync(Lfs.PP.Combine(newDirFullPath, Consts.FileNames.LogBrowserSecureJson), secureJson, cancel: cancel);
                 }
 
                 // URL 生成
@@ -870,9 +1038,11 @@ namespace IPA.DN.FileCenter
                     result.GeneratedUrlDirAuthCredentialDirect = tmp;
                 }
 
-                secureJson.Normalize();
-
-                await Lfs.WriteJsonToFileAsync(Lfs.PP.Combine(newDirFullPath, Consts.FileNames.LogBrowserSecureJson), secureJson, cancel: cancel);
+                // ディレクトリの更新日時の変更
+                if (option.IsInboxUploadMode == false)
+                {
+                    await Lfs.SetDirectoryMetadataAsync(newDirFullPath, new FileMetadata(timeStamp), cancel);
+                }
 
                 return result;
             }
@@ -881,7 +1051,10 @@ namespace IPA.DN.FileCenter
                 // 何らかの処理に失敗した場合はディレクトリごと削除する
                 try
                 {
-                    await Lfs.DeleteDirectoryAsync(newDirFullPath, true);
+                    if (option.IsInboxUploadMode == false)
+                    {
+                        await Lfs.DeleteDirectoryAsync(newDirFullPath, true);
+                    }
                 }
                 catch (Exception ex)
                 {

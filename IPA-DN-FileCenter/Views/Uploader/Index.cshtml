@@ -158,7 +158,7 @@
                     <div class="field is-narrow">
                         <div class="control">
                             <label class="checkbox">
-                                <input type="checkbox" name="veryshort" value="true">
+                                <input type="checkbox" name="veryshort" value="true" @Model.VeryShort._BoolToChecked()>
                                 <i class="fas fa-feather-alt"></i> できる限り短い URL を生成します。電話や目視などで URL を伝えたり入力したりする際に便利です。
                             </label>
                         </div>

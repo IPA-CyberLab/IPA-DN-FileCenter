@@ -19,7 +19,7 @@
             <div class="field">
                 <label class="label">アップロード通知先メールアドレス (オプション):</label>
                 <div class="control has-icons-left">
-                    <input class="input is-info" type="text" placeholder="アップロード受信トレイにファイルがアップロードされたことを通知する宛先メールアドレスを指定します。" name="email" value="">
+                    <input class="input is-info" type="text" placeholder="アップロード受信トレイにファイルがアップロードされたことを通知する宛先メールアドレスを指定します。" name="email" style="font-weight: bold" value="@Model.Email._NonNullTrim()">
                     <span class="icon is-small is-left">
                         <i class="far fa-envelope"></i>
                     </span>
@@ -46,7 +46,7 @@
             <p>　</p>
 
             <div class="field">
-                <label class="label">セキュリティ オプション:</label>
+                <label class="label">主要なオプション:</label>
             </div>
 
             <div class="field is-horizontal">
@@ -59,6 +59,22 @@
                             <label class="checkbox">
                                 <input type="checkbox" name="auth" value="true" @Model.Auth._BoolToChecked()>
                                 <i class="fas fa-lock"></i> ダウンロード時におけるユーザー認証を有効にする (パスワードを知らない場合、ダウンロードすることができません。)<br>※ ユーザー認証を無効にしている場合は、URL を知っている人は誰でもファイルにアクセスできます。
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal">
+                <div class="field-label">
+                    <label class="label">複数人からのアップロードを想定:</label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow">
+                        <div class="control">
+                            <label class="checkbox">
+                                <input type="checkbox" name="InboxForcePrefixYymmdd" value="true" @Model.InboxForcePrefixYymmdd._BoolToChecked()>
+                                <i class="fas fa-user-friends"></i> ファイルがアップロードされる際に、自動的に日時のタイムスタンプおよびアップロード元ホスト名を付けた仮想サブディレクトリに格納します。<br>同じ URL を複数人または公衆に配布し、自由にアップロードしてもらう際に便利です。
                             </label>
                         </div>
                     </div>
@@ -110,7 +126,7 @@
                     <div class="field is-narrow">
                         <div class="control">
                             <label class="checkbox">
-                                <input type="checkbox" name="veryshort" value="true">
+                                <input type="checkbox" name="veryshort" value="true" @Model.VeryShort._BoolToChecked()>
                                 <i class="fas fa-feather-alt"></i> できる限り短い URL を生成します。電話や目視などで URL を伝えたり入力したりする際に便利です。
                             </label>
                         </div>
@@ -185,8 +201,7 @@
             control.className += " is-loading";
         }
 
-        function CopyToClipboard(btn)
-        {
+        function CopyToClipboard(btn) {
             btn.textContent = "クリップボードにコピーしました !";
             btn.className = "button is-info";
             document.getElementById("textbody").select();

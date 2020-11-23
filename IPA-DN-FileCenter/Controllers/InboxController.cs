@@ -29,6 +29,7 @@ namespace IPA.DN.FileCenter.Controllers
             this.server = server;
         }
 
+        [HttpGet]
         public IActionResult UploadForm(PageContext page)
         {
             string baseUrl = Request.GetDisplayUrl()._ParseUrl()._CombineUrl("/").ToString();
@@ -108,6 +109,7 @@ namespace IPA.DN.FileCenter.Controllers
                 VeryShort = form.VeryShort,
                 Zip = false,
                 Email = form.Email,
+                InboxForcePrefixYymmdd = form.InboxForcePrefixYymmdd,
                 PIN = this._EasyLoadCookie<string>("pin")._NonNullTrim(),
             };
 
@@ -121,6 +123,8 @@ namespace IPA.DN.FileCenter.Controllers
                 //Days = form.Days,
                 Zip = form.Zip,
                 Email = form.Email._NonNullTrim(),
+                VeryShort = form.VeryShort,
+                InboxForcePrefixYymmdd = form.InboxForcePrefixYymmdd,
             };
 
             this._EasySaveCookie("InboxCreateForm", cookie);
@@ -146,7 +150,7 @@ namespace IPA.DN.FileCenter.Controllers
         [RequestFormLimits(MultipartBodyLengthLimit = FileCenterConsts.UploadSizeHardLimit)]
         [DisableRequestSizeLimit]
         [HttpPost]
-        public async Task<IActionResult> UploadAsync(UploadFormRequest form,
+        public async Task<IActionResult> UploadForm(UploadFormRequest form,
             List<IFormFile> file,
             List<IFormFile> file_1,
             List<IFormFile> file_2,
@@ -162,6 +166,8 @@ namespace IPA.DN.FileCenter.Controllers
             bool json,
             bool getfile,
             bool getdir,
+            string inboxid,
+            string inboxpass,
             CancellationToken cancel)
         {
             using UploadFileList fl = new UploadFileList();
@@ -180,31 +186,23 @@ namespace IPA.DN.FileCenter.Controllers
 
             UploadOption opt = new UploadOption
             {
-                Auth = form.Auth,
-                Days = form.Days,
-                Destination = form.Recipient,
-                LogAccess = form.Log,
-                Once = form.Once,
-                UrlHint = form.UrlHint,
-                VeryShort = form.VeryShort,
-                Zip = form.Zip,
-                PIN = this._EasyLoadCookie<string>("pin")._NonNullTrim(),
+                Auth = false,
+                Days = 0,
+                Destination = "",
+                LogAccess = false,
+                Once = false,
+                UrlHint = "",
+                VeryShort = false,
+                Zip = false,
+                PIN = "",
+                IsInboxUploadMode = true,
+                InboxId = inboxid,
+                InboxUploadPassword = inboxpass,
             };
 
             if (pin._IsFilled()) opt.PIN = pin;
 
             opt.Normalize();
-
-            UploadFormCookies cookie = new UploadFormCookies
-            {
-                Auth = form.Auth,
-                Log = form.Log,
-                //Once = form.Once,
-                //Days = form.Days,
-                Zip = form.Zip,
-            };
-
-            this._EasySaveCookie("uploadForm", cookie);
 
             try
             {
