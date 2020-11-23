@@ -102,6 +102,18 @@ namespace IPA.DN.FileCenter
         [Display(Name = "一度にアップロード可能なファイルの数")]
         public int UploadNumLimit { get; set; }
 
+        [Display(Name = "SMTP サーバーホスト名")]
+        public string SmtpHostname { get; set; } = "";
+
+        [Display(Name = "SMTP サーバーポート番号")]
+        public int SmtpPort { get; set; } = 0;
+
+        [Display(Name = "SMTP サーバーユーザー名")]
+        public string? SmtpUsername { get; set; }
+
+        [Display(Name = "SMTP サーバーパスワード")]
+        public string? SmtpPassword { get; set; }
+
         public string DataStoreRootDir { get; set; } = "";
         public DateTimeOffset LastUploadDateTime { get; set; }
 
@@ -119,6 +131,8 @@ namespace IPA.DN.FileCenter
             UploadSizeLimit = Math.Min(UploadSizeLimit, FileCenterConsts.UploadSizeHardLimit);
 
             if (UploadNumLimit <= 0) UploadNumLimit = FileCenterConsts.DefaultUploadNumLimit;
+
+            if (this.SmtpPort == 0) this.SmtpPort = Consts.Ports.Smtp;
         }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

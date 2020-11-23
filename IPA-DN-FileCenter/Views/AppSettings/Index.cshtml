@@ -67,6 +67,62 @@
             </div>
 
             <div class="field is-horizontal">
+                <div class="field-label is-normal">
+                    <label class="label">@Html.DisplayNameFor(model => model.SmtpHostname)</label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow">
+                        <p class="control">
+                            @Html.EditorFor(model => model.SmtpHostname, new { htmlAttributes = new { @class = "input is-info" } })
+                            <span class="help is-primary" asp-validation-for="SmtpHostname"></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal">
+                <div class="field-label is-normal">
+                    <label class="label">@Html.DisplayNameFor(model => model.SmtpPort)</label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow">
+                        <p class="control">
+                            @Html.EditorFor(model => model.SmtpPort, new { htmlAttributes = new { @class = "input is-info" } })
+                            <span class="help is-primary" asp-validation-for="SmtpPort"></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal">
+                <div class="field-label is-normal">
+                    <label class="label">@Html.DisplayNameFor(model => model.SmtpUsername)</label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow">
+                        <p class="control">
+                            @Html.EditorFor(model => model.SmtpUsername, new { htmlAttributes = new { @class = "input is-info" } })
+                            <span class="help is-primary" asp-validation-for="SmtpUsername"></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal">
+                <div class="field-label is-normal">
+                    <label class="label">@Html.DisplayNameFor(model => model.SmtpPassword)</label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow">
+                        <p class="control">
+                            @Html.EditorFor(model => model.SmtpPassword, new { htmlAttributes = new { @class = "input is-info" } })
+                            <span class="help is-primary" asp-validation-for="SmtpPassword"></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal">
                 <div class="field-label">
                     <!-- Left empty for spacing -->
                 </div>

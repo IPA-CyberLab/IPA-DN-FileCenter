@@ -144,7 +144,7 @@ namespace IPA.DN.FileCenter.Controllers
             try
             {
                 var result = await server.UploadAsync(DateTimeOffset.Now,
-                    Request.HttpContext.Connection.RemoteIpAddress._UnmapIPv4().ToString(),
+                    Request.HttpContext.Connection.RemoteIpAddress._UnmapIPv4()!.ToString(),
                     Request.GetDisplayUrl(),
                     fl,
                     opt,

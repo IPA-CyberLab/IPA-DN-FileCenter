@@ -48,7 +48,6 @@ namespace DaemonCenter.Controllers
         [HttpPost]
         public IActionResult Index([FromForm] AppSettings appSettings)
         {
-            appSettings._DebugAsJson();
             if (ModelState.IsValid == false)
             {
                 return View("Index", appSettings);
@@ -56,11 +55,18 @@ namespace DaemonCenter.Controllers
 
             lock (Server.DbLock)
             {
-                Server.Db.PIN = appSettings.PIN;
-                Server.Db.UploadNumLimit = appSettings.UploadNumLimit;
-                Server.Db.UploadSizeLimit = appSettings.UploadSizeLimit;
-                Server.Db.WebSiteTitle = appSettings.WebSiteTitle;
-                Server.Db.Normalize();
+                var db = Server.Db;
+
+                db.PIN = appSettings.PIN;
+                db.UploadNumLimit = appSettings.UploadNumLimit;
+                db.UploadSizeLimit = appSettings.UploadSizeLimit;
+                db.WebSiteTitle = appSettings.WebSiteTitle;
+                db.SmtpHostname = appSettings.SmtpHostname;
+                db.SmtpPort = appSettings.SmtpPort;
+                db.SmtpUsername = appSettings.SmtpUsername;
+                db.SmtpPassword = appSettings.SmtpPassword;
+
+                db.Normalize();
             }
 
             return Redirect("/");
