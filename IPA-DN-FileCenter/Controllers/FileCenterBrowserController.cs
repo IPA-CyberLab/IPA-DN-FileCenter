@@ -34,14 +34,14 @@ using IPA.DN.FileCenter.Models;
 
 namespace IPA.DN.FileCenter
 {
-    [Route(FileCenterConsts.FileBrowserHttpDir + "/{*path}")]
+    [Route(FileCenterConsts.FileBrowserDownloadHttpDir + "/{*path}")]
     public class FileCenterBrowserController : Controller
     {
         public async Task<IActionResult> Index([FromServices] Server server)
         {
             string fullpath = Request._GetRequestPathAndQueryString();
 
-            if (fullpath._TryTrimStartWith(out string path, StringComparison.OrdinalIgnoreCase, FileCenterConsts.FileBrowserHttpDir) == false)
+            if (fullpath._TryTrimStartWith(out string path, StringComparison.OrdinalIgnoreCase, FileCenterConsts.FileBrowserDownloadHttpDir) == false)
             {
                 return new ContentResult { Content = "Invalid URL", ContentType = "text/plain", StatusCode = 404 };
             }

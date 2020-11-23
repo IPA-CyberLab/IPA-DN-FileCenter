@@ -1,0 +1,66 @@
+﻿@model UploadResult
+
+@{
+    Page.Title = "新しいアップロード受信トレイが作成されました";
+
+    var dbSnapshot = Server.DbSnapshot;
+
+    string bodyTxt = Model.ToString();
+
+    string bodyForUploaderTxt = Model.ToString(true);
+}
+
+<h2 class="title is-4">@Page.FullTitle</h2>
+
+<div class="box">
+    <div class="content">
+        <p class="title is-6">1. 自動生成された受信トレイ URL</p>
+        <p style="font-weight: bold"><a href="@Model.GeneratedUrlUploadDir">@Model.GeneratedUrlUploadDir</a></p>
+        <p>上記の URL を、ファイルをアップロードしてもらいたい相手にメール等でお伝えください。以下の「本文」を利用すると便利です。</p>
+        <p>　</p>
+        <p class="title is-6">2. 以下の本文をメールに貼り付けて相手先に送信</p>
+        <button class="button is-success" style="font-weight: bold" onclick="CopyToClipboard(this)"><i class="far fa-copy"></i>&nbsp;以下の本文をクリップボードにコピーする</button>
+        <div class="control">
+            <textarea class="textarea is-focused is-success" id="textbody" style="height: 25em; font-family: Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;" readonly>@bodyForUploaderTxt</textarea>
+        </div>
+        <p>　</p>
+        <p class="title is-6">3. 以下の認証情報を必ず保存しておいてください</p>
+        <button class="button is-danger" style="font-weight: bold" onclick="CopyToClipboard2(this)"><i class="far fa-copy"></i>&nbsp;以下の本文をクリップボードにコピーする</button>
+        <div class="control">
+            <textarea class="textarea is-focused is-danger" id="textbody2" style="height: 25em; font-family: Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;" readonly>@bodyTxt</textarea>
+        </div>
+        <p>　</p>
+        <p>　</p>
+        <p class="title is-6">3. 技術者向け情報</p>
+        <p>以下は、このアップロード結果をコンピュータ処理プログラムによって自動使用したいと考える技術者向けの情報です。</p>
+        <div class="control">
+            <pre><code class="language-json">@Html.Raw(Model._ObjectToJson())</code></pre>
+        </div>
+    </div>
+</div>
+
+
+
+
+@section scripts {
+
+    <script type="text/javascript">
+
+        function CopyToClipboard(btn)
+        {
+            btn.textContent = "クリップボードにコピーしました !";
+            btn.className = "button is-info";
+            document.getElementById("textbody").select();
+            document.execCommand('copy');
+        }
+
+        function CopyToClipboard2(btn) {
+            btn.textContent = "クリップボードにコピーしました !";
+            btn.className = "button is-warning";
+            document.getElementById("textbody2").select();
+            document.execCommand('copy');
+        }
+
+   </script>
+
+}

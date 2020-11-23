@@ -1,0 +1,200 @@
+﻿@model UploadFormCookies
+@{
+    Page.Title = "新しいアップロード受信トレイを作成";
+
+    var dbSnapshot = Server.DbSnapshot;
+
+}
+
+<h2 class="title is-4">@Page.FullTitle</h2>
+
+<form action="/u/Create" enctype="multipart/form-data" method="post">
+    <div class="box">
+        <div class="content">
+
+            <p>外部のユーザーにファイルをポンポンとアップロードしてもらうための、新しいアップロード受信トレイを作成します。</p>
+
+            <p>　</p>
+
+            <div class="field">
+                <label class="label">アップロード通知先メールアドレス (オプション):</label>
+                <div class="control has-icons-left">
+                    <input class="input is-info" type="text" placeholder="アップロード受信トレイにファイルがアップロードされたことを通知する宛先メールアドレスを指定します。" name="email" value="">
+                    <span class="icon is-small is-left">
+                        <i class="far fa-envelope"></i>
+                    </span>
+                </div>
+                <p class="help is-info">
+                    ファイルがアップロードされると、ここで指定したメールアドレス宛にメールが送付されます。事前に「システム設定」ボタンをクリックして、SMTP サーバーの設定を行なってください。
+                </p>
+            </div>
+            <p>　</p>
+
+            <div class="field">
+                <label class="label">生成する URL に使用する文字列 (オプション):</label>
+                <div class="control has-icons-left">
+                    <input class="input is-info" type="text" placeholder="アップロード受信トレイの URL の一部として使用される文字列を指定します。(英数字のみ、32 文字以内)" name="urlhint" value="">
+                    <span class="icon is-small is-left">
+                        <i class="far fa-folder-open"></i>
+                    </span>
+                </div>
+                <p class="help is-info">
+                    本システムではランダムで推測されにくい URL を自動生成しますが、ここで文字列を指定すると、その文字列を一部にできるだけ含んだ URL を生成するようになります。16 文字以内を推奨します。
+                </p>
+            </div>
+
+            <p>　</p>
+
+            <div class="field">
+                <label class="label">セキュリティ オプション:</label>
+            </div>
+
+            <div class="field is-horizontal">
+                <div class="field-label">
+                    <label class="label">ユーザー認証の有効化:</label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow">
+                        <div class="control">
+                            <label class="checkbox">
+                                <input type="checkbox" name="auth" value="true" @Model.Auth._BoolToChecked()>
+                                <i class="fas fa-lock"></i> ダウンロード時におけるユーザー認証を有効にする (パスワードを知らない場合、ダウンロードすることができません。)<br>※ ユーザー認証を無効にしている場合は、URL を知っている人は誰でもファイルにアクセスできます。
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p>　</p>
+
+            <div class="field">
+                <div class="control">
+                    <button class="button is-link" style="font-weight: bold" onclick="StartUpload(this)">
+                        <i class="far fa-folder-open"></i>&nbsp;新しいアップロード受信トレイを作成
+                    </button>
+                </div>
+                <p class="help is-info">
+                    この作成ボタンは、1 回だけクリックしてください。何度もクリックしないでください。
+                </p>
+            </div>
+
+            <hr>
+
+            <div class="field">
+                <label class="label">その他のオプション:</label>
+            </div>
+
+            <p>以下は、特に必要がある場合のみ変更してください。</p>
+
+            <div class="field is-horizontal">
+                <div class="field-label">
+                    <label class="label">1 回のみダウンロード可能:</label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow">
+                        <div class="control">
+                            <label class="checkbox">
+                                <input type="checkbox" name="once" value="true">
+                                <i class="fas fa-shield-alt"></i> 生成された URL に最初にアクセスしたコンピュータのみがファイルをダウンロードできるようにする<br>　　(最初にアクセスした IP アドレスから 60 分間のみダウンロード可能)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal">
+                <div class="field-label">
+                    <label class="label">できる限り短い URL を生成:</label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow">
+                        <div class="control">
+                            <label class="checkbox">
+                                <input type="checkbox" name="veryshort" value="true">
+                                <i class="fas fa-feather-alt"></i> できる限り短い URL を生成します。電話や目視などで URL を伝えたり入力したりする際に便利です。
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal">
+                <div class="field-label">
+                    <label class="label">ダウンロード有効期限の設定:</label>
+                </div>
+                <div class="field-body">
+                    <div class="field has-addons is-narrow">
+                        <p class="control is-expanded  has-icons-left">
+                            <input class="input" name="days" placeholder="日数を 1 以上で指定" style="font-weight: bold">
+                            <span class="icon is-small is-left">
+                                <i class="fas fa-calendar-day"></i>
+                            </span>
+                        </p>
+                        <p class="control">
+                            <a class="button is-static">
+                                日間のみ有効
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal">
+                <div class="field-label">
+                    <label class="label">アクセスログ確認機能の有効化:</label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow">
+                        <div class="control">
+                            <label class="checkbox">
+                                <input type="checkbox" name="log" value="true" @Model.Log._BoolToChecked()>
+                                <i class="fas fa-search"></i> 生成された URL へのアクセス試行やファイルのダウンロードのアクセスログの確認機能を有効にする
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <p>　</p>
+            <hr>
+
+            <div class="field">
+                <label class="label">コンピュータ技術者向け情報:</label>
+            </div>
+
+            <p>UNIX の curl コマンドを以下のように用いると、1 つまたは複数のファイルをコマンドラインからアップロードし、結果の JSON を受け取ることができ便利です。</p>
+            <button class="button is-success" style="font-weight: bold" onclick="CopyToClipboard(this); return false;"><i class="far fa-copy"></i>&nbsp;以下のコマンドラインをクリップボードにコピーする</button>
+            <div class="control">
+                <textarea class="textarea is-focused is-success" id="textbody" style="font-family: Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;" readonly>@ViewBag.curl</textarea>
+            </div>
+        </div>
+    </div>
+</form>
+
+
+@section scripts {
+
+    <script type="text/javascript">
+
+        updateDirDivVisible();
+
+
+
+        function StartUpload(control) {
+            control.className += " is-loading";
+        }
+
+        function CopyToClipboard(btn)
+        {
+            btn.textContent = "クリップボードにコピーしました !";
+            btn.className = "button is-info";
+            document.getElementById("textbody").select();
+            document.execCommand('copy');
+        }
+
+
+    </script>
+
+}
+

@@ -119,6 +119,21 @@ namespace IPA.DN.FileCenter
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(
+                    name: "upload_top",
+                    pattern: $"{FileCenterConsts.FileBrowserUploadInboxHttpDir}/",
+                    defaults: new { controller = "Inbox", action = "Index" });
+
+                endpoints.MapControllerRoute(
+                    name: "upload_create",
+                    pattern: $"{FileCenterConsts.FileBrowserUploadInboxHttpDir}/create/",
+                    defaults: new { controller = "Inbox", action = "Create" });
+
+                endpoints.MapControllerRoute(
+                    name: "upload_inbox",
+                    pattern: FileCenterConsts.FileBrowserUploadInboxHttpDir + "/{inboxid}/{inboxpass}/",
+                    defaults: new { controller = "Inbox", action = "UploadForm" });
+
+                endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=Uploader}/{action=Index}/{id?}");
             });

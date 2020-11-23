@@ -69,7 +69,9 @@ namespace IPA.DN.FileCenter
         public const string SingleInstanceKey = "IPA.DN.FileCenter";
         public const string HiveSettingsName = "FileCenter/Settings";
 
-        public const string FileBrowserHttpDir = "/d";
+        public const string FileBrowserDownloadHttpDir = "/d";
+
+        public const string FileBrowserUploadInboxHttpDir = "/u";
 
         public const string DefaultWebSiteTitle = "IPA FileCenter Secure File Upload System";
 
@@ -103,15 +105,18 @@ namespace IPA.DN.FileCenter
         public int UploadNumLimit { get; set; }
 
         [Display(Name = "SMTP サーバーホスト名")]
-        public string SmtpHostname { get; set; } = "";
+        public string? SmtpHostname { get; set; }
 
         [Display(Name = "SMTP サーバーポート番号")]
         public int SmtpPort { get; set; } = 0;
 
-        [Display(Name = "SMTP サーバーユーザー名")]
+        [Display(Name = "SMTP 送信元メールアドレス")]
+        public string? SmtpFrom { get; set; }
+
+        [Display(Name = "SMTP サーバー認証ユーザー名")]
         public string? SmtpUsername { get; set; }
 
-        [Display(Name = "SMTP サーバーパスワード")]
+        [Display(Name = "SMTP サーバー認証パスワード")]
         public string? SmtpPassword { get; set; }
 
         public string DataStoreRootDir { get; set; } = "";
@@ -152,6 +157,7 @@ namespace IPA.DN.FileCenter
         public string GeneratedUrlFirstFileAuthCredentialDirect { get; set; } = "";
         public string? GeneratedUserName { get; set; }
         public string? GeneratedPassword { get; set; }
+        public string? GeneratedInboxUploadPassword { get; set; }
         public bool IsZipped { get; set; }
         public string? GeneratedZipPassword { get; set; }
         public string Recipient { get; set; } = "";
@@ -160,90 +166,116 @@ namespace IPA.DN.FileCenter
         public long TotalFileSize { get; set; }
         public bool AllowOnlyOnce { get; set; }
         public string FirstFileNameForPrint { get; set; } = "";
+        public bool IsCreatingUploadInbox { get; set; }
+        public string GeneratedUrlUploadDir { get; set; } = "";
 
-        public override string ToString()
+        public override string ToString() => ToString(false);
+
+        public string ToString(bool forInboxUploader)
         {
             StringWriter w = new StringWriter();
 
-            w.WriteLine("--------- ファイルの送信のご案内 ここから ----------");
-
-            if (this.Recipient._IsFilled())
+            if (forInboxUploader && this.IsCreatingUploadInbox == false)
             {
-                w.WriteLine($"{this.Recipient.Trim()} 様");
-                w.WriteLine();
+                throw new ArgumentException(nameof(forInboxUploader));
             }
 
-            if (this.NumFiles == 1)
+            if (forInboxUploader == false)
             {
-                w.WriteLine($"ファイル 「{this.FirstFileNameForPrint}」 ({this.TotalFileSize._GetFileSizeStr()}) をお送りいたします。");
-            }
-            else
-            {
-                w.WriteLine($"ファイル 「{this.FirstFileNameForPrint}」 等 {this.NumFiles._ToString3()} ファイル (合計 {this.TotalFileSize._GetFileSizeStr()}) をお送りいたします。");
-            }
-
-            w.WriteLine("大変お手数ですが、以下の URL にアクセスの上、ダウンロードをお願いいたします。");
-            w.WriteLine();
-
-            w.WriteLine("■ ファイルをダウンロードするための URL:");
-            w.WriteLine(GeneratedUrlDir);
-            w.WriteLine();
-
-            if (this.GeneratedUserName._IsFilled())
-            {
-                w.WriteLine("※ この URL は第三者に配布・転載しないでください。");
-                w.WriteLine();
-
-                w.WriteLine("■ 上記 URL にアクセスするための認証ユーザー名とパスワード:");
-                w.WriteLine("ユーザー名:");
-                w.WriteLine(this.GeneratedUserName);
-                w.WriteLine();
-
-                w.WriteLine("パスワード:");
-                w.WriteLine(this.GeneratedPassword);
-                w.WriteLine();
-
-
-            }
-
-            if (this.GeneratedZipPassword._IsFilled())
-            {
-                w.WriteLine("■ ZIP ファイルの暗号化パスワード:");
-                w.WriteLine(this.GeneratedZipPassword);
-                w.WriteLine();
-            }
-
-            if (this.Expires < Util.MaxDateTimeOffsetValue)
-            {
-                w.WriteLine("■ ファイルのダウンロード有効期限:");
-                w.WriteLine(this.Expires._ToLocalDtStr(option: DtStrOption.DateOnly));
-                w.WriteLine();
-            }
-
-            if (this.AllowOnlyOnce)
-            {
-                w.WriteLine("■ セキュリティ機能:");
-                w.WriteLine("ファイルは、最初にダウンロードした時から 60 分間は同じ端末 (IP)");
-                w.WriteLine("から再度ダウンロード可能です。それ以降はダウンロードできません。");
-                w.WriteLine();
-            }
-
-            if (this.GeneratedUserName._IsFilled())
-            {
-                w.WriteLine("■ 法律上の通知: 万一本メールを誤受信等で入手された場合");
-
-                if (this.Recipient._IsFilled())
+                if (IsCreatingUploadInbox == false)
                 {
-                    w.WriteLine($"上記のユーザー名とパスワードは、アクセス制御機能の識別符号に該当し、\r\n「{this.Recipient.Trim()}」様専用に発行されたものです。");
+                    w.WriteLine("--------- ファイルの送付のご案内 ここから ----------");
                 }
                 else
                 {
-                    w.WriteLine(@"上記のユーザー名とパスワードは、アクセス制御機能の識別符号に該当し、
-本メールの「本文」の冒頭に宛名人が指定されている場合は、
-その宛名人のみに宛てて専用で発行されたものです。");
+                    w.WriteLine("--------- アップロード受信トレイへのアクセス方法 (オーナー向け) ここから ----------");
                 }
 
-                w.WriteLine(@"それ以外の方は、認証に使用することはできません。
+                if (IsCreatingUploadInbox == false)
+                {
+                    if (this.Recipient._IsFilled())
+                    {
+                        w.WriteLine($"{this.Recipient.Trim()} 様");
+                        w.WriteLine();
+                    }
+
+                    if (this.NumFiles == 1)
+                    {
+                        w.WriteLine($"ファイル 「{this.FirstFileNameForPrint}」 ({this.TotalFileSize._GetFileSizeStr()}) をお送りいたします。");
+                    }
+                    else
+                    {
+                        w.WriteLine($"ファイル 「{this.FirstFileNameForPrint}」 等 {this.NumFiles._ToString3()} ファイル (合計 {this.TotalFileSize._GetFileSizeStr()}) をお送りいたします。");
+                    }
+                    w.WriteLine("大変お手数ですが、以下の URL にアクセスの上、ダウンロードをお願いいたします。");
+                }
+                else
+                {
+                    w.WriteLine("このたび作成されたアップロード受信トレイへのアクセス方法は、以下のとおりである。");
+                }
+
+                w.WriteLine();
+
+                w.WriteLine("■ ファイルをダウンロードするための URL:");
+                w.WriteLine(GeneratedUrlDir);
+
+                w.WriteLine();
+
+                if (this.GeneratedUserName._IsFilled())
+                {
+                    w.WriteLine("※ この URL は第三者に配布・転載しないでください。");
+                    w.WriteLine();
+
+                    w.WriteLine("■ 上記 URL にアクセスするための認証ユーザー名とパスワード:");
+                    w.WriteLine("ユーザー名:");
+                    w.WriteLine(this.GeneratedUserName);
+                    w.WriteLine();
+
+                    w.WriteLine("パスワード:");
+                    w.WriteLine(this.GeneratedPassword);
+                    w.WriteLine();
+                }
+
+                if (this.GeneratedZipPassword._IsFilled())
+                {
+                    w.WriteLine("■ ZIP ファイルの暗号化パスワード:");
+                    w.WriteLine(this.GeneratedZipPassword);
+                    w.WriteLine();
+                }
+
+                if (this.Expires < Util.MaxDateTimeOffsetValue)
+                {
+                    w.WriteLine("■ ファイルのダウンロード有効期限:");
+                    w.WriteLine(this.Expires._ToLocalDtStr(option: DtStrOption.DateOnly));
+                    w.WriteLine();
+                }
+
+                if (this.AllowOnlyOnce)
+                {
+                    w.WriteLine("■ セキュリティ機能:");
+                    w.WriteLine("ファイルは、最初にダウンロードした時から 60 分間は同じ端末 (IP)");
+                    w.WriteLine("から再度ダウンロード可能です。それ以降はダウンロードできません。");
+                    w.WriteLine();
+                }
+
+                if (IsCreatingUploadInbox == false)
+                {
+                    if (this.GeneratedUserName._IsFilled())
+                    {
+                        w.WriteLine("■ 法律上の通知: 万一本メールを誤受信等で入手された場合");
+
+                        if (this.Recipient._IsFilled())
+                        {
+                            w.WriteLine($"上記のユーザー名とパスワードは、アクセス制御機能の識別符号に該当し、\r\n「{this.Recipient.Trim()}」様専用に発行されたものです。");
+                        }
+                        else
+                        {
+                            w.WriteLine(@"上記のユーザー名とパスワードは、アクセス制御機能の識別符号に該当し、
+本メールの「本文」の冒頭に宛名人が指定されている場合は、
+その宛名人のみに宛てて専用で発行されたものです。");
+                        }
+
+                        w.WriteLine(@"それ以外の方は、認証に使用することはできません。
 万一、本メールがそれ以外の方に誤送信または共有された場合、
 受信者が上記のユーザー名とパスワードを用いて URL にアクセスすることは
 不正アクセス禁止法により禁止されています。本メールが誤受信である
@@ -252,15 +284,48 @@ namespace IPA.DN.FileCenter
 してユーザー名とパスワードを入力する行為には、刑事責任および民事責任
 が課せられます。");
 
-                w.WriteLine("上記にかかわらず、本ファイルの送信者およびその同一組織の職員等が、");
-                w.WriteLine("送信済みファイル内容および履歴の確認のため、自らアクセスすることは");
-                w.WriteLine("許容されます。[アクセス管理者]");
+                        w.WriteLine("上記にかかわらず、本ファイルの送信者およびその同一組織の職員等が、");
+                        w.WriteLine("送信済みファイル内容および履歴の確認のため、自らアクセスすることは");
+                        w.WriteLine("許容されます。[アクセス管理者]");
+
+                        w.WriteLine();
+                    }
+                }
+
+                if (IsCreatingUploadInbox == false)
+                {
+                    w.WriteLine("--------- ファイルの送付のご案内 ここまで ----------");
+                }
+                else
+                {
+                    w.WriteLine("--------- このアップロード受信トレイへのアクセス方法 (オーナー向け) ここまで ----------");
+                }
 
                 w.WriteLine();
             }
+            else
+            {
+                w.WriteLine("--------- ファイルのアップロード依頼 ここから ----------");
 
-            w.WriteLine("--------- ファイルの送信のご案内 ここまで ----------");
-            w.WriteLine();
+                w.WriteLine("ファイルをアップロードいただくための URL をお送りいたします。");
+                w.WriteLine("大変お手数ですが、以下の URL にアクセスの上、アップロードをお願いいたします。");
+
+                w.WriteLine();
+
+                w.WriteLine("■ ファイルをアップロードするための URL:");
+                w.WriteLine(GeneratedUrlUploadDir);
+
+                w.WriteLine();
+                w.WriteLine("上記 URL にアクセスいただきますと、ファイルをアップロードするためのフォームが表示されます。");
+                w.WriteLine("画面の指示に従い、ファイルのアップロードをお願いいたします。");
+
+                w.WriteLine();
+                w.WriteLine("※ この URL は第三者に配布・転載しないでください。");
+                w.WriteLine();
+
+                w.WriteLine("--------- ファイルの送信のご案内 ここまで ----------");
+                w.WriteLine();
+            }
 
             return w.ToString();
         }
@@ -273,6 +338,7 @@ namespace IPA.DN.FileCenter
         public bool Zip { get; set; } = false;
         //public bool Once { get; set; } = false;
         //public int Days { get; set; } = 0;
+        public string Email { get; set; } = "";
     }
 
     public class UploadFormRequest
@@ -285,6 +351,8 @@ namespace IPA.DN.FileCenter
         public bool Zip { get; set; }
         public bool Once { get; set; }
         public int Days { get; set; }
+
+        public string? Email { get; set; }
 
         public string? dirname_1 { get; set; }
         public string? dirname_2 { get; set; }
@@ -391,6 +459,8 @@ namespace IPA.DN.FileCenter
 
     public class UploadOption : INormalizable
     {
+        public bool IsInboxCreateMode { get; set; }
+
         public string? PIN { get; set; }
         public string? Destination { get; set; }
         public string? UrlHint { get; set; }
@@ -400,6 +470,8 @@ namespace IPA.DN.FileCenter
         public bool Zip { get; set; }
         public bool Once { get; set; }
         public int Days { get; set; }
+
+        public string? Email { get; set; }
 
         public string IpAddress { get; set; } = "";
 
@@ -460,7 +532,7 @@ namespace IPA.DN.FileCenter
 
                 Browser = new LogBrowser(new LogBrowserOptions(this.RootDirectoryFullPath,
                     systemTitle: this.DbSnapshot.WebSiteTitle,
-                    flags: LogBrowserFlags.NoPreview | LogBrowserFlags.NoRootDirectory | LogBrowserFlags.SecureJson), FileCenterConsts.FileBrowserHttpDir);
+                    flags: LogBrowserFlags.NoPreview | LogBrowserFlags.NoRootDirectory | LogBrowserFlags.SecureJson), FileCenterConsts.FileBrowserDownloadHttpDir);
 
                 this.HiveData.EventListener.RegisterCallback(async (caller, type, state) =>
                 {
@@ -517,10 +589,13 @@ namespace IPA.DN.FileCenter
                 throw new CoresException("Incorrect PIN code.");
             }
 
-            if (fileList.FileList.Count == 0)
+            if (option.IsInboxCreateMode == false)
             {
-                // ファイルがない
-                throw new CoresException($"You must specify at least one file to upload.");
+                if (fileList.FileList.Count == 0)
+                {
+                    // ファイルがない
+                    throw new CoresException($"You must specify at least one file to upload.");
+                }
             }
 
             if (fileList.FileList.Count > DbSnapshot.UploadNumLimit)
@@ -643,6 +718,12 @@ namespace IPA.DN.FileCenter
                 result.IsZipped = true;
             }
 
+            if (option.IsInboxCreateMode)
+            {
+                result.GeneratedInboxUploadPassword = (option.VeryShort ? Str.GenRandNumericPasswordWithBlocks() : Str.GenRandPassword(24, false)).ToLower();
+                result.IsCreatingUploadInbox = true;
+            }
+
             // ディレクトリ作成
             await Lfs.CreateDirectoryAsync(newDirFullPath, cancel: cancel);
 
@@ -732,6 +813,12 @@ namespace IPA.DN.FileCenter
                     NumFiles = result.NumFiles,
                 };
 
+                if (option.IsInboxCreateMode)
+                {
+                    secureJson.IsInbox = true;
+                    secureJson.InboxUploadPassword = result.GeneratedInboxUploadPassword!;
+                }
+
                 if (option.Auth)
                 {
                     secureJson.AuthDatabase = new KeyValueList<string, string>();
@@ -740,9 +827,14 @@ namespace IPA.DN.FileCenter
                 }
 
                 // URL 生成
-                result.GeneratedUrlDir = baseUri._CombineUrl(FileCenterConsts.FileBrowserHttpDir + "/" + newDirName + "/").ToString();
-                result.GeneratedUrlDirAuthDirect = baseUri._CombineUrl(FileCenterConsts.FileBrowserHttpDir + "/" + newDirName + "/" + (option.Auth ? authSubDirName + "/" : "")).ToString();
+                result.GeneratedUrlDir = baseUri._CombineUrl(FileCenterConsts.FileBrowserDownloadHttpDir + "/" + newDirName + "/").ToString();
+                result.GeneratedUrlDirAuthDirect = baseUri._CombineUrl(FileCenterConsts.FileBrowserDownloadHttpDir + "/" + newDirName + "/" + (option.Auth ? authSubDirName + "/" : "")).ToString();
                 result.GeneratedUrlFirstFileDirect = result.GeneratedUrlDirAuthDirect._CombineUrl(firstFileRelativeName).ToString();
+
+                if (option.IsInboxCreateMode)
+                {
+                    result.GeneratedUrlUploadDir = baseUri._CombineUrl(FileCenterConsts.FileBrowserUploadInboxHttpDir + "/" + newDirName + "/" + result.GeneratedInboxUploadPassword + "/").ToString();
+                }
 
                 if (option.Auth == false)
                 {

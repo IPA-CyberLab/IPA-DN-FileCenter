@@ -1,0 +1,162 @@
+﻿@model UploadFormCookies
+@{
+    Page.Title = "ファイルアップロード (送信) フォーム";
+
+    var dbSnapshot = Server.DbSnapshot;
+
+}
+
+<h2 class="title is-4">@Page.FullTitle</h2>
+
+<form asp-controller="Uploader" asp-action="Upload" enctype="multipart/form-data" method="post">
+    <div class="box">
+        <div class="content">
+
+            <p><b>1 個または複数のファイルを Web ブラウザを用いてアップロードしてください。<br>アップロードしたファイルは、アップロード依頼者に送付されます。ご不明な点について、詳しくは、アップロード依頼者にお問い合わせください。</b></p>
+
+            @for (int i = 1; i <= FileCenterConsts.MaxUploadFileFormElements; i++)
+            {
+
+                <div class="field" id="field_@i" style="display: @(i == 1 ? "block" : "none")">
+                    <label class="label">アップロードするファイル #@i @(i == 1 ? "" : " (オプション)"):</label>
+                    <div class="control">
+                        <div id="file-js-example" class="file has-name @(i == 1 ? "is-info" : "is-primary")">
+                            <label class="file-label">
+                                <input class="file-input" type="file" name="file_@(i)" id="file_@(i)" multiple="multiple" onchange="FileControlOnUpdate(this)">
+                                <span class="file-cta">
+                                    <span class="file-icon">
+                                        <i class="fas fa-upload"></i>
+                                    </span>
+                                    <span class="file-label" style="font-weight: bold">
+                                        アップロードするファイルの選択@(i == 1 ? "" : " (追加)")
+                                    </span>
+                                </span>
+                                <span class="file-name">
+                                    ファイルが選択されていません。
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="control" id="dirdiv_@(i)" style="display: none">
+                        <input class="input @(i == 1 ? "is-link" : "is-primary")" type="text" name="dirname_@(i)" placeholder="オプション: ファイル #@i の仮想サブディレクトリ名 (省略可能)">
+                    </div>
+                </div>
+
+            }
+
+            <p>　</p>
+
+            <div class="field">
+                <div class="control">
+                    <button class="button is-link" style="font-weight: bold" onclick="StartUpload(this)">
+                        <i class="fas fa-network-wired"></i>&nbsp;ファイルをアップロード
+                    </button>
+                </div>
+                <p class="help is-info">
+                    このアップロードボタンは、1 回だけクリックしてください。何度もクリックしないでください。送信には、回線速度とファイルのサイズにより、かなりの時間がかかる場合があります。Web ブラウザのプログレスバーが止まったように見えることがありますが、ブラウザを操作せずに、そのままお待ちください。目安として、1 分の時間で、ADSL 回線の場合 10 Mbytes、光ファイバー回線の場合 100 Mbytes 程度のアップロードができます。モバイル回線などでは ADSL の 10 ～ 100 倍の時間がかかります。
+                </p>
+            </div>
+
+
+            <p>　</p>
+            <hr>
+
+            <div class="field">
+                <label class="label">コンピュータ技術者向け情報:</label>
+            </div>
+
+            <p>UNIX の curl コマンドを以下のように用いると、1 つまたは複数のファイルをコマンドラインからアップロードし、結果の JSON を受け取ることができ便利です。</p>
+            <button class="button is-success" style="font-weight: bold" onclick="CopyToClipboard(this); return false;"><i class="far fa-copy"></i>&nbsp;以下のコマンドラインをクリップボードにコピーする</button>
+            <div class="control">
+                <textarea class="textarea is-focused is-success" id="textbody" style="font-family: Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;" readonly>@ViewBag.curl</textarea>
+            </div>
+        </div>
+    </div>
+</form>
+
+
+@section scripts {
+
+    <script type="text/javascript">
+
+        updateDirDivVisible();
+
+        function updateDirDivVisible()
+        {
+            for (let i = 1; i <= @FileCenterConsts.MaxUploadFileFormElements; i++)
+            {
+                let fileControl = document.getElementById("file_" + i);
+                let dirdiv = document.getElementById("dirdiv_" + i);
+
+                if (fileControl.files.length == 0)
+                {
+                    dirdiv.style.display = "none";
+                }
+                else
+                {
+                    dirdiv.style.display = "block";
+                }
+            }
+        }
+
+        function StartUpload(control)
+        {
+            control.className += " is-loading";
+        }
+
+        function FileControlOnUpdate(control)
+        {
+            var fileNameListStr = "";
+
+            for (let i = 0; i < control.files.length; i++)
+            {
+                const file = control.files[i];
+
+                if (i >= 1)
+                {
+                    fileNameListStr += ", ";
+                }
+
+                fileNameListStr += file.name;
+            }
+
+            if (control.files.length == 0)
+            {
+                fileNameListStr = "ファイルが選択されていません。";
+            }
+            else
+            {
+                fileNameListStr = control.files.length + " 個のファイル: " + fileNameListStr;
+
+                const tmp1 = control.id.indexOf("_");
+                const tmp2 = control.id.substr(tmp1 + 1);
+                const thisNumber = parseInt(tmp2);
+                const nextNumber = thisNumber + 1;
+
+                const nextField = document.getElementById("field_" + nextNumber);
+                if (nextField != null)
+                {
+                    nextField.style.display = "block";
+                }
+            }
+
+            const fileNameControl = control.parentNode.querySelector('.file-name');
+            fileNameControl.textContent = fileNameListStr;
+            fileNameControl.style.fontWeight = "bold";
+
+            updateDirDivVisible();
+        }
+
+        function CopyToClipboard(btn)
+        {
+            btn.textContent = "クリップボードにコピーしました !";
+            btn.className = "button is-info";
+            document.getElementById("textbody").select();
+            document.execCommand('copy');
+        }
+
+
+    </script>
+
+}
+

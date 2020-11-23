@@ -65,6 +65,7 @@ namespace DaemonCenter.Controllers
                 db.SmtpPort = appSettings.SmtpPort;
                 db.SmtpUsername = appSettings.SmtpUsername;
                 db.SmtpPassword = appSettings.SmtpPassword;
+                db.SmtpFrom = appSettings.SmtpFrom;
 
                 db.Normalize();
             }
