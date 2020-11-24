@@ -167,6 +167,8 @@ namespace IPA.DN.FileCenter
         public bool AllowOnlyOnce { get; set; }
         public string FirstFileNameForPrint { get; set; } = "";
         public bool IsCreatingUploadInbox { get; set; }
+        public bool IsUploadingForInbox { get; set; }
+        public string? EmailSentForInbox { get; set; }
         public string GeneratedUrlUploadDir { get; set; } = "";
 
         public override string ToString() => ToString(false);
@@ -182,7 +184,11 @@ namespace IPA.DN.FileCenter
 
             if (forInboxUploader == false)
             {
-                if (IsCreatingUploadInbox == false)
+                if (IsUploadingForInbox)
+                {
+                    w.WriteLine("--------- ファイルのアップロード完了の通知 ここから ----------");
+                }
+                else if (IsCreatingUploadInbox == false)
                 {
                     w.WriteLine("--------- ファイルの送付のご案内 ここから ----------");
                 }
@@ -199,15 +205,29 @@ namespace IPA.DN.FileCenter
                         w.WriteLine();
                     }
 
+                    string tmp = "お送りいたします。";
+                    if (IsUploadingForInbox)
+                    {
+                        tmp = "アップロードしましたので、お知らせします。";
+                    }
+
                     if (this.NumFiles == 1)
                     {
-                        w.WriteLine($"ファイル 「{this.FirstFileNameForPrint}」 ({this.TotalFileSize._GetFileSizeStr()}) をお送りいたします。");
+                        w.WriteLine($"ファイル 「{this.FirstFileNameForPrint}」 ({this.TotalFileSize._GetFileSizeStr()}) を{tmp}");
                     }
                     else
                     {
-                        w.WriteLine($"ファイル 「{this.FirstFileNameForPrint}」 等 {this.NumFiles._ToString3()} ファイル (合計 {this.TotalFileSize._GetFileSizeStr()}) をお送りいたします。");
+                        w.WriteLine($"ファイル 「{this.FirstFileNameForPrint}」 等 {this.NumFiles._ToString3()} ファイル (合計 {this.TotalFileSize._GetFileSizeStr()}) を{tmp}");
                     }
-                    w.WriteLine("大変お手数ですが、以下の URL にアクセスの上、ダウンロードをお願いいたします。");
+
+                    if (IsUploadingForInbox)
+                    {
+                        w.WriteLine("ファイルは、以下のアップローダ受信トレイにアップロードされました。");
+                    }
+                    else
+                    {
+                        w.WriteLine("大変お手数ですが、以下の URL にアクセスの上、ダウンロードをお願いいたします。");
+                    }
                 }
                 else
                 {
@@ -216,7 +236,14 @@ namespace IPA.DN.FileCenter
 
                 w.WriteLine();
 
-                w.WriteLine("■ ファイルをダウンロードするための URL:");
+                if (IsUploadingForInbox)
+                {
+                    w.WriteLine("■ アップロード受信トレイの URL:");
+                }
+                else
+                {
+                    w.WriteLine("■ ファイルをダウンロードするための URL:");
+                }
                 w.WriteLine(GeneratedUrlDir);
 
                 w.WriteLine();
@@ -292,7 +319,11 @@ namespace IPA.DN.FileCenter
                     }
                 }
 
-                if (IsCreatingUploadInbox == false)
+                if (IsUploadingForInbox)
+                {
+                    w.WriteLine("--------- ファイルのアップロード完了の通知 ここから ----------");
+                }
+                else if (IsCreatingUploadInbox == false)
                 {
                     w.WriteLine("--------- ファイルの送付のご案内 ここまで ----------");
                 }
@@ -584,6 +615,8 @@ namespace IPA.DN.FileCenter
         {
             option.Normalize();
 
+            StringWriter emailBody = new StringWriter();
+
             string newDirName;
             string newDirFullPath;
             string yymmddAndSeqNo;
@@ -592,6 +625,8 @@ namespace IPA.DN.FileCenter
 
             string authSubDirName = "";
             string firstFileRelativeName = "";
+
+            string hostNameOrIp = await LocalNet.GetHostNameSingleOrIpAsync(ipAddress, cancel);
 
             LogBrowserSecureJson? existingSecureJson = null;
 
@@ -654,6 +689,28 @@ namespace IPA.DN.FileCenter
                 // ファイルサイス超過
                 throw new CoresException($"Max uploadable files total size is {DbSnapshot.UploadSizeLimit._GetFileSizeStr()}. You attempted to upload {totalStreamSize._GetFileSizeStr()}.");
             }
+
+            string emailSubject = $"[通知] アップロード受信トレイ /{option.InboxId}/ に {fileList.FileList.Count} 個のファイル ({totalStreamSize._GetFileSizeStr()}) がアップロードされました";
+            
+            emailBody.WriteLine($"アップロード受信トレイ /{option.InboxId}/ にファイルがアップロードされましたので通知いたします。");
+
+            emailBody.WriteLine();
+
+            emailBody.WriteLine($"アップロードされたファイル (合計 {fileList.FileList.Count} ファイル、{totalStreamSize._GetFileSizeStr()}):");
+
+            fileList.FileList._DoForEach(x => emailBody.WriteLine($"- {PPMac.NormalizeRelativePath(x.RelativeFileName)} ({x.Stream.Length._GetFileSizeStr()})"));
+
+            emailBody.WriteLine();
+            emailBody.WriteLine("アップロード日時:");
+            emailBody.WriteLine(timeStamp._ToFullDateTimeStr());
+            emailBody.WriteLine();
+            emailBody.WriteLine("アップロード元 IP アドレス: " + (hostNameOrIp._IsSamei(ipAddress) ? ipAddress : $"{hostNameOrIp} ({ipAddress})"));
+            emailBody.WriteLine();
+            emailBody.WriteLine("これらのファイルをダウンロードするには、以下の URL にアクセスしてください。");
+
+            string tmpUrl = baseUri._CombineUrl(FileCenterConsts.FileBrowserDownloadHttpDir + "/" + option.InboxId + "/").ToString();
+            emailBody.WriteLine(tmpUrl);
+            emailBody.WriteLine();
 
             if (option.IsInboxUploadMode == false)
             {
@@ -766,8 +823,6 @@ namespace IPA.DN.FileCenter
                 {
                     // prefix ディレクトリ名を強制的に付けるオプションが有効である
                     string prefixYymmdd = timeStamp.LocalDateTime.ToString("yyyyMMdd_HHmmss");
-
-                    string hostNameOrIp = await LocalNet.GetHostNameSingleOrIpAsync(ipAddress, cancel);
 
                     string tmp;
 
@@ -972,7 +1027,7 @@ namespace IPA.DN.FileCenter
                         AllowOnlyOnce = option.Once,
                         TotalFileSize = result.TotalFileSize,
                         NumFiles = result.NumFiles,
-                        InboxEmail = option.Email,
+                        InboxEmail = option.Email._NonNull(),
                     };
 
                     if (option.IsInboxCreateMode)
@@ -996,7 +1051,16 @@ namespace IPA.DN.FileCenter
 
                 // URL 生成
                 result.GeneratedUrlDir = baseUri._CombineUrl(FileCenterConsts.FileBrowserDownloadHttpDir + "/" + newDirName + "/").ToString();
-                result.GeneratedUrlDirAuthDirect = baseUri._CombineUrl(FileCenterConsts.FileBrowserDownloadHttpDir + "/" + newDirName + "/" + (option.Auth ? authSubDirName + "/" : "")).ToString();
+
+                if (option.IsInboxUploadMode == false)
+                {
+                    result.GeneratedUrlDirAuthDirect = baseUri._CombineUrl(FileCenterConsts.FileBrowserDownloadHttpDir + "/" + newDirName + "/" + (option.Auth ? authSubDirName + "/" : "")).ToString();
+                }
+                else
+                {
+                    result.GeneratedUrlDirAuthDirect = baseUri._CombineUrl(FileCenterConsts.FileBrowserDownloadHttpDir + "/" + newDirName + "/" + (existingSecureJson!.AuthRequired ? existingSecureJson.AuthSubDirName + "/" : "")).ToString();
+                }
+
                 result.GeneratedUrlFirstFileDirect = result.GeneratedUrlDirAuthDirect._CombineUrl(firstFileRelativeName).ToString();
 
                 if (option.IsInboxCreateMode)
@@ -1042,6 +1106,36 @@ namespace IPA.DN.FileCenter
                 if (option.IsInboxUploadMode == false)
                 {
                     await Lfs.SetDirectoryMetadataAsync(newDirFullPath, new FileMetadata(timeStamp), cancel);
+                }
+
+                if (option.IsInboxUploadMode)
+                {
+                    result.IsUploadingForInbox = true;
+
+                    // 電子メールの送信
+                    if (existingSecureJson!.InboxEmail._IsFilled())
+                    {
+                        var db = this.DbSnapshot;
+
+                        string body = emailBody.ToString();
+                        string subject = emailSubject;
+                        string from = db.SmtpFrom._NonNullTrim();
+                        string to = existingSecureJson!.InboxEmail;
+
+                        if (from._IsFilled() && to._IsFilled() && db.SmtpHostname._IsFilled() && db.SmtpPort != 0)
+                        {
+                            if (await SmtpUtil.SendAsync(new SmtpConfig(db.SmtpHostname, db.SmtpPort), from, to, subject, body, true, cancel))
+                            {
+                                string email = to;
+                                int index = email.IndexOf('@');
+                                if (index != -1)
+                                {
+                                    email = '*'._MakeCharArray(index) + email.Substring(index);
+                                }
+                                result.EmailSentForInbox = email;
+                            }
+                        }
+                    }
                 }
 
                 return result;
