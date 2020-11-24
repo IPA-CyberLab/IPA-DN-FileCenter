@@ -30,12 +30,12 @@ namespace IPA.DN.FileCenter.Controllers
         }
 
         [HttpGet]
-        public IActionResult UploadForm(PageContext page)
+        public IActionResult UploadForm(PageContext page, string inboxid, string inboxpass)
         {
             string baseUrl = Request.GetDisplayUrl()._ParseUrl()._CombineUrl("/").ToString();
 
             string curlCmdLine =
-                $"$ curl {baseUrl}Uploader/Upload -f -F -F \"json=true\" -F \"getfile=false\" -F \"getdir=false\" -F \"days=0\" -F \"auth=false\" -F \"log=true\" -F \"once=false\" -F \"urlhint=testfile\" -F \"zip=false\" -F \"file=@送信ファイル１\" -F \"file=@送信ファイル２\"";
+                $"$ curl {baseUrl}u/{inboxid}/{inboxpass}/ -f -F \"json=true\" -F \"getfile=false\" -F \"getdir=false\" -F \"file=@送信ファイル１\" -F \"file=@送信ファイル２\"";
 
             ViewBag.curl = curlCmdLine;
 
