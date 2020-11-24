@@ -171,6 +171,22 @@
                 </div>
             </div>
 
+            <div class="field is-horizontal">
+                <div class="field-label">
+                    <label class="label">アップロード可能なアクセス元 IP アドレスを制限:</label>
+                </div>
+                <div class="field-body">
+                    <div class="field has-addons">
+                        <p class="control is-expanded  has-icons-left">
+                            <input class="input" name="InboxIpAcl" placeholder="例: 103.95.184.0/24; 130.158.0.0/16; !130.158.6.0/24; 2001:c90::/32, !2001:c90::1234/128" value="@Model.InboxIpAcl">
+                            <span class="icon is-small is-left">
+                                <i class="fas fa-server"></i>
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
 
             <p>　</p>
             <hr>

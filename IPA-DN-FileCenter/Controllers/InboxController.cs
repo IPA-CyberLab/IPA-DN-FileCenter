@@ -110,6 +110,7 @@ namespace IPA.DN.FileCenter.Controllers
                 Zip = false,
                 Email = form.Email,
                 InboxForcePrefixYymmdd = form.InboxForcePrefixYymmdd,
+                InboxIpAcl = EasyIpAcl.NormalizeRules(form.InboxIpAcl),
                 PIN = this._EasyLoadCookie<string>("pin")._NonNullTrim(),
             };
 
@@ -125,6 +126,7 @@ namespace IPA.DN.FileCenter.Controllers
                 Email = form.Email._NonNullTrim(),
                 VeryShort = form.VeryShort,
                 InboxForcePrefixYymmdd = form.InboxForcePrefixYymmdd,
+                InboxIpAcl = EasyIpAcl.NormalizeRules(form.InboxIpAcl),
             };
 
             this._EasySaveCookie("InboxCreateForm", cookie);

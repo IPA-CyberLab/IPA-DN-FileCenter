@@ -170,6 +170,7 @@ namespace IPA.DN.FileCenter
         public bool IsUploadingForInbox { get; set; }
         public string? EmailSentForInbox { get; set; }
         public string GeneratedUrlUploadDir { get; set; } = "";
+        public string InboxIpAcl { get; set; } = "";
 
         public override string ToString() => ToString(false);
 
@@ -372,6 +373,7 @@ namespace IPA.DN.FileCenter
         public string Email { get; set; } = "";
         public bool InboxForcePrefixYymmdd { get; set; } = false;
         public bool VeryShort { get; set; } = false;
+        public string InboxIpAcl { get; set; } = "";
     }
 
     public class UploadFormRequest
@@ -387,6 +389,7 @@ namespace IPA.DN.FileCenter
 
         public string? Email { get; set; }
         public bool InboxForcePrefixYymmdd { get; set; }
+        public string? InboxIpAcl { get; set; }
 
         public string? dirname_1 { get; set; }
         public string? dirname_2 { get; set; }
@@ -498,6 +501,7 @@ namespace IPA.DN.FileCenter
         public bool InboxForcePrefixYymmdd { get; set; }
         public string InboxId { get; set; } = "";
         public string InboxUploadPassword { get; set; } = "";
+        public string InboxIpAcl { get; set; } = "";
 
         public string? PIN { get; set; }
         public string? Destination { get; set; }
@@ -808,7 +812,7 @@ namespace IPA.DN.FileCenter
                 if (await Lfs.IsDirectoryExistsAsync(testDirFullPath, cancel) == false ||
                     await Lfs.IsFileExistsAsync(testSecureJsonFullPath, cancel) == false)
                 {
-                    throw new CoresException("指定されたアップロード用 URL が不正です。電子メール等で URL を受け取った場合は、URL に自動的に改行等が入っていないかどうかご確認ください。改行が自動的に挿入されてしまっている場合は、改行をまたいで URL を連結し、もう一度アクセスしてみてください。(1)");
+                    throw new CoresException("Invalid Uploader URL. 指定されたアップロード用 URL が不正です。電子メール等で URL を受け取った場合は、URL に自動的に改行等が入っていないかどうかご確認ください。改行が自動的に挿入されてしまっている場合は、改行をまたいで URL を連結し、もう一度アクセスしてみてください。(1)");
                 }
 
                 // _secure.json を読み込んでみる
@@ -821,7 +825,12 @@ namespace IPA.DN.FileCenter
 
                 if (existingSecureJson.InboxUploadPassword._IsEmpty() || existingSecureJson.InboxUploadPassword != option.InboxUploadPassword)
                 {
-                    throw new CoresException("指定されたアップロード用 URL が不正です。電子メール等で URL を受け取った場合は、URL に自動的に改行等が入っていないかどうかご確認ください。改行が自動的に挿入されてしまっている場合は、改行をまたいで URL を連結し、もう一度アクセスしてみてください。(2)");
+                    throw new CoresException("Invalid Uploader URL. 指定されたアップロード用 URL が不正です。電子メール等で URL を受け取った場合は、URL に自動的に改行等が入っていないかどうかご確認ください。改行が自動的に挿入されてしまっている場合は、改行をまたいで URL を連結し、もう一度アクセスしてみてください。(2)");
+                }
+
+                if (EasyIpAcl.Evaluate(existingSecureJson.InboxIpAcl, ipAddress) != EasyIpAclAction.Permit)
+                {
+                    throw new CoresException($"Invalid Upload Source IP Address. 指定されたアップロード用 URL は、特定の IP アドレスからのみアップロードすることが許可されています。あなたの端末の IP アドレス '{ipAddress}' からは、アップロードすることはできません。");
                 }
 
                 yymmddAndSeqNo = "";
@@ -1038,7 +1047,10 @@ namespace IPA.DN.FileCenter
                         TotalFileSize = result.TotalFileSize,
                         NumFiles = result.NumFiles,
                         InboxEmail = option.Email._NonNull(),
+                        InboxIpAcl = EasyIpAcl.NormalizeRules(option.InboxIpAcl),
                     };
+
+                    result.InboxIpAcl = secureJson.InboxIpAcl;
 
                     if (option.IsInboxCreateMode)
                     {
