@@ -691,7 +691,13 @@ namespace IPA.DN.FileCenter
             }
 
             string emailSubject = $"[通知] アップロード受信トレイ /{option.InboxId}/ に {fileList.FileList.Count} 個のファイル ({totalStreamSize._GetFileSizeStr()}) がアップロードされました";
-            
+
+            var dbSnap = DbSnapshot;
+
+            emailBody.WriteLine($"{dbSnap.WebSiteTitle}\r\n{baseUri._CombineUrl("/")} からのご連絡");
+
+            emailBody.WriteLine();
+
             emailBody.WriteLine($"アップロード受信トレイ /{option.InboxId}/ にファイルがアップロードされましたので通知いたします。");
 
             emailBody.WriteLine();
@@ -710,6 +716,10 @@ namespace IPA.DN.FileCenter
 
             string tmpUrl = baseUri._CombineUrl(FileCenterConsts.FileBrowserDownloadHttpDir + "/" + option.InboxId + "/").ToString();
             emailBody.WriteLine(tmpUrl);
+            emailBody.WriteLine();
+            emailBody.WriteLine();
+
+            emailBody.WriteLine($"{dbSnap.WebSiteTitle}\r\n{baseUri._CombineUrl("/")}");
             emailBody.WriteLine();
 
             if (option.IsInboxUploadMode == false)

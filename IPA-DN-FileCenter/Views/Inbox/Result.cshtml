@@ -1,7 +1,7 @@
 ﻿@model UploadResult
 
 @{
-    Page.Title = "ご協力ありがとうございます。ファイルのアップロードが完了しました";
+    Page.Title = $"ご協力ありがとうございました。{Model.NumFiles} 個のファイルのアップロードが完了しました。";
 
     var dbSnapshot = Server.DbSnapshot;
 
@@ -26,7 +26,7 @@
             <p class="title is-6">1. アップロードありがとうございました。アップロードが完了した旨の連絡を、アップロード依頼者に通知しました。</p>
             <p>あなたがファイルをアップロード完了した旨の連絡は、<br>ただいまアップロード依頼者の電子メールアドレス <strong>@Model.EmailSentForInbox</strong> 宛に通知されました。<br>(メールアドレスの一部は、伏せ字となっております。)</p>
         }
-        <p>　</p>
+        <p><strong>アップロードされたファイル数: @Model.NumFiles 個、合計サイズ: @Model.TotalFileSize._GetFileSizeStr()</strong></p>
         <p><strong>ありがとうございました。この Web ブラウザを閉じていただいて差し支えありません。</strong></p>
         <p>　</p>
         <p>　</p>
