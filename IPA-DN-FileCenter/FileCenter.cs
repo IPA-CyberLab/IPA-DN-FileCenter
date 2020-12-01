@@ -95,7 +95,7 @@ namespace IPA.DN.FileCenter
         [Required]
         public string WebSiteTitle { get; set; } = "";
 
-        [Display(Name = "PIN コード")]
+        [Display(Name = "システム利用パスワード")]
         public string? PIN { get; set; }
 
         [Display(Name = "一度にアップロード可能なファイルの合計サイズ")]
@@ -671,17 +671,7 @@ namespace IPA.DN.FileCenter
 
                 foreach (string token in PPWin.SplitTokens(file.RelativeFileName))
                 {
-                    if (token._NonNullTrim()._IsSamei(Consts.FileNames.LogBrowserAccessLogDirName))
-                    {
-                        throw new CoresException($"Incorrect directory or filename.");
-                    }
-
-                    if (token._NonNullTrim()._IsSamei(Consts.FileNames.LogBrowserSecureJson))
-                    {
-                        throw new CoresException($"Incorrect directory or filename.");
-                    }
-
-                    if (token._NonNullTrim()._IsSamei(Consts.FileNames.LogBrowserHistoryDirName))
+                    if (Consts.FileNames.IsSpecialFileNameForLogBrowser(token))
                     {
                         throw new CoresException($"Incorrect directory or filename.");
                     }
@@ -1048,6 +1038,7 @@ namespace IPA.DN.FileCenter
                         NumFiles = result.NumFiles,
                         InboxEmail = option.Email._NonNull(),
                         InboxIpAcl = EasyIpAcl.NormalizeRules(option.InboxIpAcl),
+                        AllowZipDownload = option.IsInboxCreateMode || (option.Auth == false && option.Zip == false),
                     };
 
                     result.InboxIpAcl = secureJson.InboxIpAcl;
