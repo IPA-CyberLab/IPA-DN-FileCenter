@@ -89,6 +89,18 @@ namespace IPA.DN.FileCenter
         public const int DefaultUploadNumLimit = 100;
     }
 
+    public class InboxUploadLog
+    {
+        public DateTimeOffset Timestamp;
+        public string? IP;
+        public int Port;
+        public string? Url;
+        public string? UserAgent;
+        public string? Referer;
+        public string? UploadedFileName;
+        public long FileSize;
+    }
+
     public class AppSettings : INormalizable, IValidatableObject, IValidatable
     {
         [Display(Name = "Web サイト表示名")]
@@ -195,7 +207,7 @@ namespace IPA.DN.FileCenter
                 }
                 else
                 {
-                    w.WriteLine("--------- アップロード受信トレイへのアクセス方法 (オーナー向け) ここから ----------");
+                    w.WriteLine("--------- ゲストアップロード領域へのアクセス方法 (オーナー向け) ここから ----------");
                 }
 
                 if (IsCreatingUploadInbox == false)
@@ -223,7 +235,7 @@ namespace IPA.DN.FileCenter
 
                     if (IsUploadingForInbox)
                     {
-                        w.WriteLine("ファイルは、以下のアップローダ受信トレイにアップロードされました。");
+                        w.WriteLine("ファイルは、以下のゲストアップロード領域にアップロードされました。");
                     }
                     else
                     {
@@ -232,14 +244,14 @@ namespace IPA.DN.FileCenter
                 }
                 else
                 {
-                    w.WriteLine("このたび作成されたアップロード受信トレイへのアクセス方法は、以下のとおりである。");
+                    w.WriteLine("このたび作成されたゲストアップロード領域へのアクセス方法は、以下のとおりである。");
                 }
 
                 w.WriteLine();
 
                 if (IsUploadingForInbox)
                 {
-                    w.WriteLine("■ アップロード受信トレイの URL:");
+                    w.WriteLine("■ ゲストアップロード領域の URL:");
                 }
                 else
                 {
@@ -330,7 +342,7 @@ namespace IPA.DN.FileCenter
                 }
                 else
                 {
-                    w.WriteLine("--------- このアップロード受信トレイへのアクセス方法 (オーナー向け) ここまで ----------");
+                    w.WriteLine("--------- このゲストアップロード領域へのアクセス方法 (オーナー向け) ここまで ----------");
                 }
 
                 w.WriteLine();
@@ -615,7 +627,7 @@ namespace IPA.DN.FileCenter
         readonly NamedAsyncLocks NamedDirectoryLocks = new NamedAsyncLocks(StrComparer.IgnoreCaseTrimComparer);
 
         // アップロードメイン処理
-        public async Task<UploadResult> UploadAsync(DateTimeOffset timeStamp, string ipAddress, string baseUrl, UploadFileList fileList, UploadOption option, CancellationToken cancel = default)
+        public async Task<UploadResult> UploadAsync(DateTimeOffset timeStamp, string clientIpAddress, int clientPort, string baseUrl, UploadFileList fileList, UploadOption option, CancellationToken cancel = default)
         {
             option.Normalize();
 
@@ -630,7 +642,7 @@ namespace IPA.DN.FileCenter
             string authSubDirName = "";
             string firstFileRelativeName = "";
 
-            string hostNameOrIp = await LocalNet.GetHostNameSingleOrIpAsync(ipAddress, cancel);
+            string hostNameOrIp = await LocalNet.GetHostNameSingleOrIpAsync(clientIpAddress, cancel);
 
             LogBrowserSecureJson? existingSecureJson = null;
 
@@ -684,7 +696,7 @@ namespace IPA.DN.FileCenter
                 throw new CoresException($"Max uploadable files total size is {DbSnapshot.UploadSizeLimit._GetFileSizeStr()}. You attempted to upload {totalStreamSize._GetFileSizeStr()}.");
             }
 
-            string emailSubject = $"[通知] アップロード受信トレイ /{option.InboxId}/ に {fileList.FileList.Count} 個のファイル ({totalStreamSize._GetFileSizeStr()}) がアップロードされました";
+            string emailSubject = $"[通知] ゲストアップロード領域 /{option.InboxId}/ に {fileList.FileList.Count} 個のファイル ({totalStreamSize._GetFileSizeStr()}) がアップロードされました";
 
             var dbSnap = DbSnapshot;
 
@@ -692,7 +704,7 @@ namespace IPA.DN.FileCenter
 
             emailBody.WriteLine();
 
-            emailBody.WriteLine($"アップロード受信トレイ /{option.InboxId}/ にファイルがアップロードされましたので通知いたします。");
+            emailBody.WriteLine($"ゲストアップロード領域 /{option.InboxId}/ にファイルがアップロードされましたので通知いたします。");
 
             emailBody.WriteLine();
 
@@ -704,7 +716,7 @@ namespace IPA.DN.FileCenter
             emailBody.WriteLine("アップロード日時:");
             emailBody.WriteLine(timeStamp._ToFullDateTimeStr());
             emailBody.WriteLine();
-            emailBody.WriteLine("アップロード元 IP アドレス: " + (hostNameOrIp._IsSamei(ipAddress) ? ipAddress : $"{hostNameOrIp} ({ipAddress})"));
+            emailBody.WriteLine("アップロード元 IP アドレス: " + (hostNameOrIp._IsSamei(clientIpAddress) ? clientIpAddress : $"{hostNameOrIp} ({clientIpAddress})"));
             emailBody.WriteLine();
             emailBody.WriteLine("これらのファイルをダウンロードするには、以下の URL にアクセスしてください。");
 
@@ -818,9 +830,9 @@ namespace IPA.DN.FileCenter
                     throw new CoresException("Invalid Uploader URL. 指定されたアップロード用 URL が不正です。電子メール等で URL を受け取った場合は、URL に自動的に改行等が入っていないかどうかご確認ください。改行が自動的に挿入されてしまっている場合は、改行をまたいで URL を連結し、もう一度アクセスしてみてください。(2)");
                 }
 
-                if (EasyIpAcl.Evaluate(existingSecureJson.InboxIpAcl, ipAddress) != EasyIpAclAction.Permit)
+                if (EasyIpAcl.Evaluate(existingSecureJson.InboxIpAcl, clientIpAddress) != EasyIpAclAction.Permit)
                 {
-                    throw new CoresException($"Invalid Upload Source IP Address. 指定されたアップロード用 URL は、特定の IP アドレスからのみアップロードすることが許可されています。あなたの端末の IP アドレス '{ipAddress}' からは、アップロードすることはできません。");
+                    throw new CoresException($"Invalid Upload Source IP Address. 指定されたアップロード用 URL は、特定の IP アドレスからのみアップロードすることが許可されています。あなたの端末の IP アドレス '{clientIpAddress}' からは、アップロードすることはできません。");
                 }
 
                 yymmddAndSeqNo = "";
@@ -835,13 +847,13 @@ namespace IPA.DN.FileCenter
 
                     string tmp;
 
-                    if (hostNameOrIp._IsSamei(ipAddress))
+                    if (hostNameOrIp._IsSamei(clientIpAddress))
                     {
-                        tmp = $"{prefixYymmdd}_" + ipAddress;
+                        tmp = $"{prefixYymmdd}_" + clientIpAddress;
                     }
                     else
                     {
-                        tmp = $"{prefixYymmdd}_" + ipAddress + "_" + hostNameOrIp;
+                        tmp = $"{prefixYymmdd}_" + clientIpAddress + "_" + hostNameOrIp;
                     }
 
                     forcedPrefixDirName = PP.MakeSafeFileName(tmp);
@@ -944,6 +956,10 @@ namespace IPA.DN.FileCenter
 
                                 await Lfs.CreateDirectoryAsync(historyDirFullName, cancel: cancel);
 
+                                if (await Lfs.IsFileExistsAsync(historyFileFullName, cancel))
+                                {
+                                    await Lfs.DeleteFileAsync(historyFileFullName);
+                                }
                                 await Lfs.MoveFileAsync(newFileFullPath, historyFileFullName, cancel);
 
                                 await Lfs.SetFileMetadataAsync(historyFileFullName, new FileMetadata(existingTimeStamp), cancel);
@@ -954,10 +970,15 @@ namespace IPA.DN.FileCenter
                             }
                         }
 
+                        long thisFileSize = 0;
+
                         using (var newFileObj = await Lfs.CreateAsync(newFileFullPath, flags: FileFlags.AutoCreateDirectory, cancel: cancel))
                         {
                             using Stream newFileStream = option.Auth == false ? (Stream)newFileObj.GetStream(true) : new XtsAesRandomAccess(newFileObj, result.GeneratedPassword!, true).GetStream(true);
-                            totalSize += await file.Stream.CopyBetweenStreamAsync(newFileStream, cancel: cancel, flush: true);
+                            long sz = await file.Stream.CopyBetweenStreamAsync(newFileStream, cancel: cancel, flush: true);
+
+                            thisFileSize += sz;
+                            totalSize += sz;
 
                             if (firstFileRelativeName._IsEmpty())
                                 firstFileRelativeName = file.RelativeFileName;
@@ -966,6 +987,21 @@ namespace IPA.DN.FileCenter
                         await Lfs.SetFileMetadataAsync(newFileFullPath, new FileMetadata(timeStamp), cancel);
 
                         await Lfs.SetDirectoryMetadataAsync(PP.GetDirectoryName(newFileFullPath), new FileMetadata(timeStamp), cancel);
+
+                        if (option.IsInboxUploadMode)
+                        {
+                            InboxUploadLog log = new InboxUploadLog
+                            {
+                                Timestamp = timeStamp,
+                                IP = clientIpAddress,
+                                Port = clientPort,
+                                Url = baseUrl,
+                                UploadedFileName = PPLinux.NormalizeDirectorySeparatorIncludeWindowsBackslash(relativeFileName),
+                                FileSize = thisFileSize,
+                            };
+
+                            await Browser.WriteAccessLogAsync("/" + PathParser.Windows.MakeSafeFileName(option.InboxId.Trim()) + "/" + Consts.FileNames.LogBrowserAccessLogDirName + "/", log, timeStamp, cancel);
+                        }
                     }
                 }
                 else
@@ -1032,7 +1068,7 @@ namespace IPA.DN.FileCenter
                         DisableAccessLog = false,
                         AllowAccessToAccessLog = option.LogAccess,
                         UploadTimeStamp = timeStamp,
-                        UploadIp = ipAddress,
+                        UploadIp = clientIpAddress,
                         AllowOnlyOnce = option.Once,
                         TotalFileSize = result.TotalFileSize,
                         NumFiles = result.NumFiles,

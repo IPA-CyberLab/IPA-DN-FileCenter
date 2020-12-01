@@ -1,7 +1,7 @@
 ﻿@model UploadResult
 
 @{
-    Page.Title = "新しいアップロード受信トレイが作成されました";
+    Page.Title = "新しいゲストアップロード領域が作成されました";
 
     var dbSnapshot = Server.DbSnapshot;
 
@@ -24,7 +24,7 @@
             <textarea class="textarea is-focused is-success" id="textbody" style="height: 25em; font-family: Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;" readonly>@bodyForUploaderTxt</textarea>
         </div>
         <p>　</p>
-        <p class="title is-6">3. このアップロード受信トレイからのファイルのダウンロード用 URL 等の情報は以下のとおりです。必ず保存しておいてください。</p>
+        <p class="title is-6">3. このゲストアップロード領域からのファイルのダウンロード用 URL 等の情報は以下のとおりです。必ず保存しておいてください。</p>
         <button class="button is-danger" style="font-weight: bold" onclick="CopyToClipboard2(this)"><i class="far fa-copy"></i>&nbsp;以下の本文をクリップボードにコピーする</button>
         <div class="control">
             <textarea class="textarea is-focused is-danger" id="textbody2" style="height: 25em; font-family: Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;" readonly>@bodyTxt</textarea>

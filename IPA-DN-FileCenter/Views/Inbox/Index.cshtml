@@ -1,6 +1,6 @@
 ﻿@model UploadFormCookies
 @{
-    Page.Title = "新しいアップロード受信トレイを作成";
+    Page.Title = "新しいゲストアップロード領域を作成";
 
     var dbSnapshot = Server.DbSnapshot;
 
@@ -12,14 +12,17 @@
     <div class="box">
         <div class="content">
 
-            <p>外部のユーザーにファイルをポンポンとアップロードしてもらうための、新しいアップロード受信トレイを作成します。</p>
+            <p>
+                <b>外部のユーザーにファイルをポンポンとアップロードしてもらうための、新しいゲストアップロード領域を作成します。</b>
+                <br>この画面は、外部からファイルを受け取るための領域を作成するためのものです。組織内から外部のユーザーにファイルを共有するためのアップロードには、<b><a href="/">メイン機能</a></b> を利用します。
+            </p>
 
             <p>　</p>
 
             <div class="field">
                 <label class="label">アップロード通知先メールアドレス (オプション):</label>
                 <div class="control has-icons-left">
-                    <input class="input is-info" type="text" placeholder="アップロード受信トレイにファイルがアップロードされたことを通知する宛先メールアドレスを指定します。" name="email" style="font-weight: bold" value="@Model.Email._NonNullTrim()">
+                    <input class="input is-info" type="text" placeholder="ゲストアップロード領域にファイルがアップロードされたことを通知する宛先メールアドレスを指定します。" name="email" style="font-weight: bold" value="@Model.Email._NonNullTrim()">
                     <span class="icon is-small is-left">
                         <i class="far fa-envelope"></i>
                     </span>
@@ -33,7 +36,7 @@
             <div class="field">
                 <label class="label">生成する URL に使用する文字列 (オプション):</label>
                 <div class="control has-icons-left">
-                    <input class="input is-info" type="text" placeholder="アップロード受信トレイの URL の一部として使用される文字列を指定します。(英数字のみ、32 文字以内)" name="urlhint" value="">
+                    <input class="input is-info" type="text" placeholder="ゲストアップロード領域の URL の一部として使用される文字列を指定します。(英数字のみ、32 文字以内)" name="urlhint" value="">
                     <span class="icon is-small is-left">
                         <i class="far fa-folder-open"></i>
                     </span>
@@ -86,7 +89,7 @@
             <div class="field">
                 <div class="control">
                     <button class="button is-link" style="font-weight: bold" onclick="StartUpload(this)">
-                        <i class="far fa-folder-open"></i>&nbsp;新しいアップロード受信トレイを作成
+                        <i class="far fa-folder-open"></i>&nbsp;新しいゲストアップロード領域を作成
                     </button>
                 </div>
                 <p class="help is-info">
@@ -189,17 +192,6 @@
 
 
             <p>　</p>
-            <hr>
-
-            <div class="field">
-                <label class="label">コンピュータ技術者向け情報:</label>
-            </div>
-
-            <p>UNIX の curl コマンドを以下のように用いると、1 つまたは複数のファイルをコマンドラインからアップロードし、結果の JSON を受け取ることができ便利です。</p>
-            <button class="button is-success" style="font-weight: bold" onclick="CopyToClipboard(this); return false;"><i class="far fa-copy"></i>&nbsp;以下のコマンドラインをクリップボードにコピーする</button>
-            <div class="control">
-                <textarea class="textarea is-focused is-success" id="textbody" style="font-family: Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;" readonly>@ViewBag.curl</textarea>
-            </div>
         </div>
     </div>
 </form>

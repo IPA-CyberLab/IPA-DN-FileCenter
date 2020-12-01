@@ -47,7 +47,7 @@ namespace IPA.DN.FileCenter.Controllers
             string baseUrl = Request.GetDisplayUrl()._ParseUrl()._CombineUrl("/").ToString();
 
             string curlCmdLine =
-                $"$ curl {baseUrl}Uploader/Upload -f -F \"pin={currentPin}\" -F \"json=true\" -F \"getfile=false\" -F \"getdir=false\" -F \"days=0\" -F \"auth=false\" -F \"log=true\" -F \"once=false\" -F \"urlhint=testfile\" -F \"zip=false\" -F \"file=@送信ファイル１\" -F \"file=@送信ファイル２\"";
+                $"$ curl {baseUrl}Uploader/Upload -k -f -F \"pin={currentPin}\" -F \"json=true\" -F \"getfile=false\" -F \"getdir=false\" -F \"days=0\" -F \"auth=false\" -F \"log=true\" -F \"once=false\" -F \"urlhint=testfile\" -F \"zip=false\" -F \"file=@送信ファイル１\" -F \"file=@送信ファイル２\"";
 
             ViewBag.curl = curlCmdLine;
 
@@ -146,6 +146,7 @@ namespace IPA.DN.FileCenter.Controllers
             {
                 var result = await server.UploadAsync(DateTimeOffset.Now,
                     Request.HttpContext.Connection.RemoteIpAddress._UnmapIPv4()!.ToString(),
+                    Request.HttpContext.Connection.RemotePort,
                     Request.GetDisplayUrl(),
                     fl,
                     opt,
