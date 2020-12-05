@@ -572,6 +572,8 @@ namespace IPA.DN.FileCenter
 
         readonly LogBrowser Browser;
 
+        readonly StatMan Stat;
+
         public Server(CancellationToken cancel = default) : base(cancel)
         {
             try
@@ -588,8 +590,11 @@ namespace IPA.DN.FileCenter
                 // 設定データベースに記載されているディレクトリを作成
                 CreateRootDirectory();
 
+                this.Stat = new StatMan(new StatManConfig { SystemName = "filecenter", LogName = "filecenter_stat" });
+
                 Browser = new LogBrowser(new LogBrowserOptions(this.RootDirectoryFullPath,
                     systemTitle: this.DbSnapshot.WebSiteTitle,
+                    stat: this.Stat,
                     flags: LogBrowserFlags.NoPreview | LogBrowserFlags.NoRootDirectory | LogBrowserFlags.SecureJson), FileCenterConsts.FileBrowserDownloadHttpDir);
 
                 this.HiveData.EventListener.RegisterCallback(async (caller, type, state) =>
@@ -600,6 +605,7 @@ namespace IPA.DN.FileCenter
                 RootDirectoryFullPath._Debug();
 
                 SettingsUpdateAsync()._GetResult();
+
             }
             catch
             {
@@ -1187,6 +1193,15 @@ namespace IPA.DN.FileCenter
                     }
                 }
 
+                Stat.AddReport("UploadedFilesSize_Total", result.TotalFileSize);
+                Stat.AddReport("UploadedFilesCount_Total", result.NumFiles);
+                Stat.AddReport("UploadedRequests_Total", 1);
+
+                if (result.IsCreatingUploadInbox)
+                {
+                    Stat.AddReport("CreatedUploadInbox_Total", 1);
+                }
+
                 return result;
             }
             catch
@@ -1221,6 +1236,8 @@ namespace IPA.DN.FileCenter
         {
             try
             {
+                this.Stat._DisposeSafe();
+
                 this.Browser._DisposeSafe();
 
                 this.HiveData._DisposeSafe();
