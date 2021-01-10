@@ -682,6 +682,11 @@ namespace IPA.DN.FileCenter
             else
             {
                 // 通常モード コード検査
+                if (data.DeleteCode._IsEmpty())
+                {
+                    throw new CoresException("Delete code is not specified. 緊急削除コードが指定されていません。");
+                }
+
                 if (data.DeleteCode._IsSamei(code) == false)
                 {
                     throw new CoresException("Invalid delete code. 緊急削除コードが正しくありません。");
