@@ -110,6 +110,20 @@
 
             <div class="field is-horizontal">
                 <div class="field-label is-normal">
+                    <label class="label">@Html.DisplayNameFor(model => model.SmtpUseSsl)</label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow">
+                        <p class="control">
+                            @Html.EditorFor(model => model.SmtpUseSsl, new { htmlAttributes = new { @class = "input is-info" } })
+                            <span class="help is-primary" asp-validation-for="SmtpUseSsl"></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal">
+                <div class="field-label is-normal">
                     <label class="label">@Html.DisplayNameFor(model => model.SmtpUsername)</label>
                 </div>
                 <div class="field-body">

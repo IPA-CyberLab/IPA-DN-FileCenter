@@ -125,6 +125,9 @@ namespace IPA.DN.FileCenter
         [Display(Name = "SMTP 送信元メールアドレス")]
         public string? SmtpFrom { get; set; }
 
+        [Display(Name = "SMTP で SSL/TLS を利用 (1: はい, 0: いいえ)")]
+        public int SmtpUseSsl { get; set; } = 0;
+
         [Display(Name = "SMTP サーバー認証ユーザー名")]
         public string? SmtpUsername { get; set; }
 
@@ -1181,7 +1184,7 @@ namespace IPA.DN.FileCenter
                         {
                             try
                             {
-                                if (await SmtpUtil.SendAsync(new SmtpConfig(db.SmtpHostname, db.SmtpPort), from, to, subject, body, false, cancel))
+                                if (await SmtpUtil.SendAsync(new SmtpConfig(db.SmtpHostname, db.SmtpPort, db.SmtpUseSsl._ToBool(), db.SmtpUsername, db.SmtpPassword), from, to, subject, body, false, cancel))
                                 {
                                     string email = to;
                                     int index = email.IndexOf('@');
