@@ -1179,15 +1179,22 @@ namespace IPA.DN.FileCenter
 
                         if (from._IsFilled() && to._IsFilled() && db.SmtpHostname._IsFilled() && db.SmtpPort != 0)
                         {
-                            if (await SmtpUtil.SendAsync(new SmtpConfig(db.SmtpHostname, db.SmtpPort), from, to, subject, body, true, cancel))
+                            try
                             {
-                                string email = to;
-                                int index = email.IndexOf('@');
-                                if (index != -1)
+                                if (await SmtpUtil.SendAsync(new SmtpConfig(db.SmtpHostname, db.SmtpPort), from, to, subject, body, false, cancel))
                                 {
-                                    email = '*'._MakeCharArray(index) + email.Substring(index);
+                                    string email = to;
+                                    int index = email.IndexOf('@');
+                                    if (index != -1)
+                                    {
+                                        email = '*'._MakeCharArray(index) + email.Substring(index);
+                                    }
+                                    result.EmailSentForInbox = email;
                                 }
-                                result.EmailSentForInbox = email;
+                            }
+                            catch (Exception ex)
+                            {
+                                ex._Error();
                             }
                         }
                     }
