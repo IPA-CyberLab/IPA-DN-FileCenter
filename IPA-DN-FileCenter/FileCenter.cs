@@ -73,7 +73,7 @@ namespace IPA.DN.FileCenter
 
         public const string FileBrowserUploadInboxHttpDir = "/u";
 
-        public const string DefaultWebSiteTitle = "IPA FileCenter Secure File Upload System";
+        public const string DefaultWebSiteTitle = "「IPA ファイルの窓口」 - オウプンソース セキュアファイルアップロードシステム";
 
         public const int MaxUploadFileFormElements = 10;
 
