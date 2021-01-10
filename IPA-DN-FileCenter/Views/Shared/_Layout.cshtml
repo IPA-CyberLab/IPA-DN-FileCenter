@@ -22,12 +22,13 @@
             </a>
             <div class="navbar-item">
                 <div class="buttons">
-                    <a class="button is-link" style="font-weight: bold" href="/">トップ</a>
-                    <a class="button is-primary" style="font-weight: bold" href="/u/">ゲストアップロード領域の作成</a>
-                    <a class="button is-light" id="config_button" asp-controller="AppSettings" asp-action="Index">システム設定</a>
+                    <a class="button is-link" style="font-weight: bold" href="/"><i class="fas fa-upload"></i>&nbsp;トップ</a>
+                    <a class="button is-primary" style="font-weight: bold" href="/u/"><i class="far fa-folder-open"></i>&nbsp;ゲストアップロード領域の作成</a>
+                    <a class="button is-warning" style="font-weight: bold" href="/delete/"><i class="far fa-trash-alt"></i>&nbsp;URL の緊急削除</a>
+                    <a class="button is-light" id="config_button" asp-controller="AppSettings" asp-action="Index"><i class="fas fa-cog"></i>&nbsp;システム設定</a>
                     @if (authed)
                     {
-                        <a class="button is-light" id="logout_button" asp-controller="EasyCookieAuth" asp-action="Logout">ログアウト</a>
+                        <a class="button is-light" id="logout_button" asp-controller="EasyCookieAuth" asp-action="Logout"><i class="fas fa-door-open"></i>&nbsp;ログアウト</a>
                     }
                 </div>
             </div>

@@ -1,0 +1,82 @@
+﻿@model DeleteForm
+@{
+    Page.Title = "URL の緊急削除";
+
+    var dbSnapshot = Server.DbSnapshot;
+
+}
+
+<h2 class="title is-4">@Page.FullTitle</h2>
+
+<form enctype="multipart/form-data" method="post">
+    <div class="box">
+        <div class="content">
+
+            <p>
+                <b>現在公開中の URL を緊急削除します。</b>
+                <br>URL を削除すると、その URL の公開が停止され、ファイルをダウンロードすることができなくなります。<br>誤ってファイルをアップロードしてしまった場合や、誤った宛先にファイルを送信してしまった場合に、アップロードを取り消すために有益です。
+            </p>
+
+            <div class="field">
+                <label class="label">削除したい URL:</label>
+                <div class="control has-icons-left">
+                    <input class="input is-info" type="text" placeholder="削除したい URL を指定します。" name="url" style="font-weight: bold" value="@Model.Url._NonNullTrim()">
+                    <span class="icon is-small is-left">
+                        <i class="fas fa-ban"></i>
+                    </span>
+                </div>
+                <p class="help is-info">
+                    ここで指定された URL の公開が停止されます。
+                </p>
+            </div>
+
+            <p>　</p>
+
+            <div class="field">
+                <label class="label">緊急削除用コード:</label>
+                <div class="control has-icons-left">
+                    <input class="input is-info" type="text" placeholder="URL 作成時に発行された緊急削除用コードを指定します。" name="code" style="font-weight: bold" value="@Model.Code._NonNullTrim()">
+                    <span class="icon is-small is-left">
+                        <i class="fas fa-key"></i>
+                    </span>
+                </div>
+                <p class="help is-info">
+                    緊急削除用コードは、URL 作成時に画面に表示されており、控えておくように案内がされている数字 12 桁のコードです。
+                </p>
+            </div>
+            <p>　</p>
+            <p>以下は、特に必要がある場合のみ変更してください。</p>
+
+            <div class="field is-horizontal">
+                <div class="field-label">
+                    <label class="label">システム管理者特権で強制削除:</label>
+                </div>
+                <div class="field-body">
+                    <div class="field is-narrow">
+                        <div class="control">
+                            <label class="checkbox">
+                                <input type="checkbox" name="force" value="true">
+                                <i class="fas fa-user-shield"></i> このチェックボックスを有効にすると、「緊急用削除コード」が指定されていない場合でも URL を強制的に削除できます。<br>(あらかじめ、ページ上部の「システム設定」ボタンをクリックしてシステム管理者モードでログインしている必要があります。ログイン後、このページに戻って処理を行なうことができます。)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field">
+                <div class="control">
+                    <button class="button is-link" style="font-weight: bold" type="submit">
+                        <i class="fas fa-trash-alt"></i>&nbsp;URL の緊急削除
+                    </button>
+                </div>
+                <p class="help is-info">
+                    この削除ボタンは、1 回だけクリックしてください。何度もクリックしないでください。
+                </p>
+            </div>
+            <p><b>URL 削除機能で URL を削除すると、それ以降、当該 URL のファイルへのアクセスが不能になります。</b><br>URL が削除されたことがマークされますが、ファイルの物理的な実体は、誤った削除を復活することができるようにするため、サーバー上のディスクに保存されたままとなります。ディレクトリの _secure.json ファイルの IsDeleted 変数が true に設定されます。これを false に戻すと、ファイルへのアクセスを復活させることができます。</p>
+
+            <p>　</p>
+        </div>
+    </div>
+</form>
+

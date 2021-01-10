@@ -186,6 +186,7 @@ namespace IPA.DN.FileCenter
         public string? EmailSentForInbox { get; set; }
         public string GeneratedUrlUploadDir { get; set; } = "";
         public string InboxIpAcl { get; set; } = "";
+        public string DeleteCode { get; set; } = "";
 
         public override string ToString() => ToString(false);
 
@@ -376,6 +377,13 @@ namespace IPA.DN.FileCenter
 
             return w.ToString();
         }
+    }
+
+    public class DeleteForm
+    {
+        public string? Url { get; set; }
+        public string? Code { get; set; }
+        public bool Force { get; set; }
     }
 
     public class UploadFormCookies
@@ -634,6 +642,68 @@ namespace IPA.DN.FileCenter
 
         readonly AsyncLock DirectoryLock = new AsyncLock();
         readonly NamedAsyncLocks NamedDirectoryLocks = new NamedAsyncLocks(StrComparer.IgnoreCaseTrimComparer);
+
+        // URL 削除処理
+        public async Task DeleteAsync(DateTimeOffset timeStamp, string clientIpAddress, string url, string code, bool force, CancellationToken cancel = default)
+        {
+            // URL のパース
+            var uri = url._ParseUrl();
+            string[] tokens = uri.AbsolutePath._Split(StringSplitOptions.RemoveEmptyEntries, '/');
+
+            string? id = null;
+
+            foreach (string token in tokens)
+            {
+                if (token.Length >= 8 && token._SliceHead(6)._IsNumber() && token[6] == '_')
+                {
+                    id = token;
+                }
+            }
+
+            if (id._IsEmpty()) throw new CoresException("URL が不正です。");
+
+            id = PathParser.Windows.MakeSafeFileName(id.Trim());
+            string dirFullPath = PP.Combine(this.RootDirectoryFullPath, id.Substring(0, 6), id);
+            string secureJsonFullPath = PP.Combine(dirFullPath, Consts.FileNames.LogBrowserSecureJson);
+            if (await Lfs.IsDirectoryExistsAsync(dirFullPath, cancel) == false ||
+                await Lfs.IsFileExistsAsync(secureJsonFullPath, cancel) == false)
+            {
+                throw new CoresException("Invalid Uploader URL. 指定された URL は存在しません。改行が自動的に挿入されてしまっている場合は、改行をまたいで URL を連結し、もう一度アクセスしてみてください。(1)");
+            }
+
+            // _secure.json を読み込んでみる
+            var data = await Lfs.ReadJsonFromFileAsync<LogBrowserSecureJson>(secureJsonFullPath, cancel: cancel);
+
+            // コードの確認
+            if (code._IsEmpty() && force)
+            {
+                // 強制モード
+            }
+            else
+            {
+                // 通常モード コード検査
+                if (data.DeleteCode._IsSamei(code) == false)
+                {
+                    throw new CoresException("Invalid delete code. 緊急削除コードが正しくありません。");
+                }
+            }
+
+            // すでに削除されているか?
+            if (data.IsDeleted)
+            {
+                throw new CoresException($"Already deleted. 指定された URL は、すでに削除されています。削除日時: {data.DeletedTimeStamp._ToFullDateTimeStr()}, 削除要求元 IP アドレス: {data.DeleteIp}");
+            }
+
+            // 削除処理
+            data.IsDeleted = true;
+            data.DeletedTimeStamp = timeStamp;
+            data.DeleteIp = clientIpAddress;
+
+            // 結果を保存
+            await Lfs.WriteJsonToFileAsync(secureJsonFullPath, data, cancel: cancel);
+
+            Stat.AddReport("DeletedUrlsCount_Total", 1);
+        }
 
         // アップロードメイン処理
         public async Task<UploadResult> UploadAsync(DateTimeOffset timeStamp, string clientIpAddress, int clientPort, string baseUrl, UploadFileList fileList, UploadOption option, CancellationToken cancel = default)
@@ -1084,7 +1154,10 @@ namespace IPA.DN.FileCenter
                         InboxEmail = option.Email._NonNull(),
                         InboxIpAcl = EasyIpAcl.NormalizeRules(option.InboxIpAcl),
                         AllowZipDownload = option.IsInboxCreateMode || (option.Auth == false && option.Zip == false),
+                        DeleteCode = Str.GenRandNumericPasswordWithBlocks(4, 3),
                     };
+
+                    result.DeleteCode = secureJson.DeleteCode;
 
                     result.InboxIpAcl = secureJson.InboxIpAcl;
 

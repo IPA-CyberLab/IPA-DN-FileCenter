@@ -14,7 +14,8 @@
     <div class="content">
         <p class="title is-6">1. 自動生成されたアップロード先 URL</p>
         <p style="font-weight: bold"><a href="@Model.GeneratedUrlDir">@Model.GeneratedUrlDir</a></p>
-        <p>正しくアップロードできているか、意図しないファイルを誤ってアップロードしていないか等を、十分確認してください。</p>
+        <p>この URL 用の緊急削除用コード: <b>@Model.DeleteCode</b><br>※ 「緊急削除用コード」は、<a href="/delete/">この URL を緊急的に削除する</a> 際に必要なコードです。将来この URL を緊急的に削除する可能性がある場合に備えて、控えておくことをお勧めします。</p>
+        <p>正しくアップロードできているか、意図しないファイルを誤ってアップロードしていないか等を、十分確認してください。誤ったファイルをアップロードした場合は、<a href="/delete/">この URL を緊急的に削除する</a> ことができます。</p>
         <p>　</p>
         <p class="title is-6">2. 以下の本文をメールに貼り付けて相手先に送信</p>
         <button class="button is-success" style="font-weight: bold" onclick="CopyToClipboard(this)"><i class="far fa-copy"></i>&nbsp;以下の本文をクリップボードにコピーする</button>
