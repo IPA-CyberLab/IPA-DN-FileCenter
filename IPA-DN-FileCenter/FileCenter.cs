@@ -263,27 +263,36 @@ namespace IPA.DN.FileCenter
                 }
                 w.WriteLine(GeneratedUrlDir);
 
-                w.WriteLine();
-
                 if (this.GeneratedUserName._IsFilled())
                 {
                     w.WriteLine("※ この URL は第三者に配布・転載しないでください。");
                     w.WriteLine();
 
                     w.WriteLine("■ 上記 URL にアクセスするための認証ユーザー名とパスワード:");
-                    w.WriteLine("ユーザー名:");
-                    w.WriteLine(this.GeneratedUserName);
+                    w.WriteLine($"ユーザー名: {this.GeneratedUserName}");
+                    w.WriteLine($"パスワード: {this.GeneratedPassword}");
+                    w.WriteLine("※ 上記のユーザー名とパスワードは、アクセス制御機能の識別符号に該当します。");
+                    w.WriteLine("   本メッセージの宛名人に発行されたものであり、それ以外の方々は使用できません。");
+                    w.WriteLine("   詳しくは、下記の「法律上の注意」をお読みください。");
                     w.WriteLine();
 
-                    w.WriteLine("パスワード:");
-                    w.WriteLine(this.GeneratedPassword);
+                    w.WriteLine("■ ファイルをダウンロードするための URL (ユーザー名とパスワードが埋め込まれた 1 行 URL");
+                    w.WriteLine(this.GeneratedUrlDirAuthCredentialDirect);
+                    w.WriteLine("注意: Internet Explorer では上記 URL は使用できません。");
+                    w.WriteLine("      Google Chrome, Mozilla Firefox, Microsoft Edge をご利用ください。");
+                    w.WriteLine("※ 上記の URL にはユーザー名とパスワードが埋め込まれており、アクセス制御機能の識別符号に該当します。");
+                    w.WriteLine("   本メッセージの宛名人に発行されたものであり、それ以外の方々は使用できません。");
+                    w.WriteLine("   詳しくは、下記の「法律上の注意」をお読みください。");
+                    w.WriteLine();
+                }
+                else
+                {
                     w.WriteLine();
                 }
 
                 if (this.GeneratedZipPassword._IsFilled())
                 {
-                    w.WriteLine("■ ZIP ファイルの暗号化パスワード:");
-                    w.WriteLine(this.GeneratedZipPassword);
+                    w.WriteLine($"■ ZIP ファイルの暗号化パスワード: {this.GeneratedZipPassword}");
                     w.WriteLine();
                 }
 
