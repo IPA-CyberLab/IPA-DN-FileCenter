@@ -271,17 +271,20 @@ namespace IPA.DN.FileCenter
                     w.WriteLine("■ 上記 URL にアクセスするための認証ユーザー名とパスワード:");
                     w.WriteLine($"ユーザー名: {this.GeneratedUserName}");
                     w.WriteLine($"パスワード: {this.GeneratedPassword}");
-                    w.WriteLine("※ 上記のユーザー名とパスワードは、アクセス制御機能の識別符号に該当します。");
-                    w.WriteLine("   本メッセージの宛名人に発行されたものであり、それ以外の方々は使用できません。");
+                    w.WriteLine("※ 上記のユーザー・パスワードは、アクセス制御の識別符号に該当します。");
+                    w.WriteLine("   本メッセージの宛名人に発行されたものであり、他人は使用できません。");
                     w.WriteLine("   詳しくは、下記の「法律上の注意」をお読みください。");
                     w.WriteLine();
 
                     w.WriteLine("■ ファイルをダウンロードするための URL (ユーザー名とパスワードが埋め込まれた 1 行 URL");
                     w.WriteLine(this.GeneratedUrlDirAuthCredentialDirect);
-                    w.WriteLine("注意: Internet Explorer では上記 URL は使用できません。");
-                    w.WriteLine("      Google Chrome, Mozilla Firefox, Microsoft Edge をご利用ください。");
-                    w.WriteLine("※ 上記の URL にはユーザー名とパスワードが埋め込まれており、アクセス制御機能の識別符号に該当します。");
-                    w.WriteLine("   本メッセージの宛名人に発行されたものであり、それ以外の方々は使用できません。");
+                    w.WriteLine("- 上記 URL がメールソフトウェアの都合で改行されている場合は、");
+                    w.WriteLine("  お手数ですが 1 行に連携していただいた上でアクセスをお願いします。");
+                    w.WriteLine("- Internet Explorer では上記 URL は使用できません。");
+                    w.WriteLine("  Chrome, Firefox, Edge 等のブラウザをご利用ください。");
+                    w.WriteLine("※ 上記の URL にはユーザー名とパスワードが埋め込まれており、");
+                    w.WriteLine("   アクセス制御機能の識別符号に該当します。");
+                    w.WriteLine("   本メッセージの宛名人に発行されたものであり、他人は使用できません。");
                     w.WriteLine("   詳しくは、下記の「法律上の注意」をお読みください。");
                     w.WriteLine();
                 }
