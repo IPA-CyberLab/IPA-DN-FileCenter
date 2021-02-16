@@ -253,6 +253,22 @@ namespace IPA.DN.FileCenter
 
                 w.WriteLine();
 
+                if (this.GeneratedUserName._IsFilled())
+                {
+                    w.WriteLine("■ ファイルをダウンロードするための URL");
+                    w.WriteLine("  (ユーザー名とパスワードが埋め込まれた 1 行 URL):");
+                    w.WriteLine(this.GeneratedUrlDirAuthCredentialDirect);
+                    w.WriteLine("- 上記 URL がメールソフトウェアの都合で改行されている場合は、");
+                    w.WriteLine("  お手数ですが 1 行に結合していただいた上でアクセスをお願いします。");
+                    w.WriteLine("- Internet Explorer では上記 URL は使用できません。");
+                    w.WriteLine("  Chrome, Firefox, Edge 等のブラウザをご利用ください。");
+                    w.WriteLine("※ 上記の URL にはユーザー名とパスワードが埋め込まれており、");
+                    w.WriteLine("   アクセス制御機能の識別符号に該当します。");
+                    w.WriteLine("   本メッセージの宛名人に発行されたものであり、他人は使用できません。");
+                    w.WriteLine("   詳しくは、下記の「法律上の注意」をお読みください。");
+                    w.WriteLine();
+                }
+
                 if (IsUploadingForInbox)
                 {
                     w.WriteLine("■ ゲストアップロード領域の URL:");
@@ -266,30 +282,11 @@ namespace IPA.DN.FileCenter
                 if (this.GeneratedUserName._IsFilled())
                 {
                     w.WriteLine("※ この URL は第三者に配布・転載しないでください。");
-                    w.WriteLine();
-
-                    w.WriteLine("■ 上記 URL にアクセスするための認証ユーザー名とパスワード:");
                     w.WriteLine($"ユーザー名: {this.GeneratedUserName}");
                     w.WriteLine($"パスワード: {this.GeneratedPassword}");
                     w.WriteLine("※ 上記のユーザー・パスワードは、アクセス制御の識別符号に該当します。");
                     w.WriteLine("   本メッセージの宛名人に発行されたものであり、他人は使用できません。");
                     w.WriteLine("   詳しくは、下記の「法律上の注意」をお読みください。");
-                    w.WriteLine();
-
-                    w.WriteLine("■ ファイルをダウンロードするための URL (ユーザー名とパスワードが埋め込まれた 1 行 URL");
-                    w.WriteLine(this.GeneratedUrlDirAuthCredentialDirect);
-                    w.WriteLine("- 上記 URL がメールソフトウェアの都合で改行されている場合は、");
-                    w.WriteLine("  お手数ですが 1 行に連携していただいた上でアクセスをお願いします。");
-                    w.WriteLine("- Internet Explorer では上記 URL は使用できません。");
-                    w.WriteLine("  Chrome, Firefox, Edge 等のブラウザをご利用ください。");
-                    w.WriteLine("※ 上記の URL にはユーザー名とパスワードが埋め込まれており、");
-                    w.WriteLine("   アクセス制御機能の識別符号に該当します。");
-                    w.WriteLine("   本メッセージの宛名人に発行されたものであり、他人は使用できません。");
-                    w.WriteLine("   詳しくは、下記の「法律上の注意」をお読みください。");
-                    w.WriteLine();
-                }
-                else
-                {
                     w.WriteLine();
                 }
 
@@ -556,6 +553,8 @@ namespace IPA.DN.FileCenter
         {
             this.Destination = this.Destination._NonNullTrimSe()._TruncStr(Consts.MaxLens.NormalStringTruncateLen);
             this.UrlHint = this.UrlHint._Normalize(true, true, false, false);
+
+            this.UrlHint = this.UrlHint.ToLower();
 
             StringBuilder sb = new StringBuilder();
             foreach (char c in UrlHint)
@@ -976,8 +975,8 @@ namespace IPA.DN.FileCenter
 
                 if (option.Auth)
                 {
-                    result.GeneratedUserName = "u" + yymmddAndSeqNo._ReplaceStr("_", "");
-                    result.GeneratedPassword = "p" + Str.GenRandPassword((option.VeryShort && option.IsInboxCreateMode == false) ? 6 : 24, false);
+                    result.GeneratedUserName = "username_" + yymmddAndSeqNo._ReplaceStr("_", "");
+                    result.GeneratedPassword = "password_" + Str.GenRandPassword((option.VeryShort && option.IsInboxCreateMode == false) ? 6 : 24, false);
                     authSubDirName = "auth" + Str.GenRandNumericPassword(7);
                 }
 
