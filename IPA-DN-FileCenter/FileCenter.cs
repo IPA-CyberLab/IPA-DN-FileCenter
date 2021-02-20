@@ -975,8 +975,8 @@ namespace IPA.DN.FileCenter
 
                 if (option.Auth)
                 {
-                    result.GeneratedUserName = "username_" + yymmddAndSeqNo._ReplaceStr("_", "");
-                    result.GeneratedPassword = "password_" + Str.GenRandPassword((option.VeryShort && option.IsInboxCreateMode == false) ? 6 : 24, false);
+                    result.GeneratedUserName = "user" + yymmddAndSeqNo._ReplaceStr("_", "");
+                    result.GeneratedPassword = "pass" + Str.GenRandPassword((option.VeryShort && option.IsInboxCreateMode == false) ? 6 : 24, false);
                     authSubDirName = "auth" + Str.GenRandNumericPassword(7);
                 }
 
