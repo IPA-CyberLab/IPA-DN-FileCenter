@@ -253,22 +253,6 @@ namespace IPA.DN.FileCenter
 
                 w.WriteLine();
 
-                if (this.GeneratedUserName._IsFilled())
-                {
-                    w.WriteLine("■ ファイルをダウンロードするための URL");
-                    w.WriteLine("  (ユーザー名とパスワードが埋め込まれた 1 行 URL):");
-                    w.WriteLine(this.GeneratedUrlDirAuthCredentialDirect);
-                    w.WriteLine("- 上記 URL がメールソフトウェアの都合で改行されている場合は、");
-                    w.WriteLine("  お手数ですが 1 行に結合していただいた上でアクセスをお願いします。");
-                    w.WriteLine("- Internet Explorer では上記 URL は使用できません。");
-                    w.WriteLine("  Chrome, Firefox, Edge 等のブラウザをご利用ください。");
-                    w.WriteLine("※ 上記の URL にはユーザー名とパスワードが埋め込まれており、");
-                    w.WriteLine("   アクセス制御機能の識別符号に該当します。");
-                    w.WriteLine("   本メッセージの宛名人に発行されたものであり、他人は使用できません。");
-                    w.WriteLine("   詳しくは、下記の「法律上の注意」をお読みください。");
-                    w.WriteLine();
-                }
-
                 if (IsUploadingForInbox)
                 {
                     w.WriteLine("■ ゲストアップロード領域の URL:");
@@ -281,9 +265,9 @@ namespace IPA.DN.FileCenter
 
                 if (this.GeneratedUserName._IsFilled())
                 {
-                    w.WriteLine("※ この URL は第三者に配布・転載しないでください。");
                     w.WriteLine($"ユーザー名: {this.GeneratedUserName}");
                     w.WriteLine($"パスワード: {this.GeneratedPassword}");
+                    w.WriteLine("※ この URL は第三者に配布・転載しないでください。");
                     w.WriteLine("※ 上記のユーザー・パスワードは、アクセス制御の識別符号に該当します。");
                     w.WriteLine("   本メッセージの宛名人に発行されたものであり、他人は使用できません。");
                     w.WriteLine("   詳しくは、下記の「法律上の注意」をお読みください。");
@@ -309,6 +293,32 @@ namespace IPA.DN.FileCenter
                     w.WriteLine("ファイルは、最初にダウンロードした時から 60 分間は同じ端末 (IP)");
                     w.WriteLine("から再度ダウンロード可能です。それ以降はダウンロードできません。");
                     w.WriteLine();
+                }
+
+                if (this.GeneratedUserName._IsFilled())
+                {
+                    w.WriteLine("■ ファイルをダウンロードするための URL");
+                    w.WriteLine("  (ユーザー名とパスワードが埋め込まれた 1 行 URL):");
+                    w.WriteLine(this.GeneratedUrlDirAuthCredentialDirect);
+                    w.WriteLine("- 上記 URL がメールソフトウェアの都合で改行されている場合は、");
+                    w.WriteLine("  お手数ですが 1 行に結合していただいた上でアクセスをお願いします。");
+                    w.WriteLine("- Internet Explorer では上記 URL は使用できません。");
+                    w.WriteLine("  Chrome, Firefox, Edge 等のブラウザをご利用ください。");
+                    w.WriteLine("- Chrome のバージョンによっては、パスワードが埋め込まれた URL が");
+                    w.WriteLine("  正しく動作しません。その場合は、上述のユーザー名とパスワード部分");
+                    w.WriteLine("  の手動入力をお願いいたします。");
+                    w.WriteLine("※ この URL は第三者に配布・転載しないでください。");
+                    w.WriteLine("※ 上記の URL にはユーザー名とパスワードが埋め込まれており、");
+                    w.WriteLine("   アクセス制御機能の識別符号に該当します。");
+                    w.WriteLine("   本メッセージの宛名人に発行されたものであり、他人は使用できません。");
+                    w.WriteLine("   詳しくは、下記の「法律上の注意」をお読みください。");
+                    w.WriteLine();
+
+                    if (this.GeneratedZipPassword._IsFilled())
+                    {
+                        w.WriteLine($"■ ZIP ファイルの暗号化パスワード: {this.GeneratedZipPassword}");
+                        w.WriteLine();
+                    }
                 }
 
                 if (IsCreatingUploadInbox == false)
