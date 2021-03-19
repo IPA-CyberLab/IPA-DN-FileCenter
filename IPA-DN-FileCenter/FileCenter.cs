@@ -1218,6 +1218,12 @@ namespace IPA.DN.FileCenter
                     result.GeneratedUrlDirAuthDirect = baseUri._CombineUrl(FileCenterConsts.FileBrowserDownloadHttpDir + "/" + newDirName + "/" + (existingSecureJson!.AuthRequired ? existingSecureJson.AuthSubDirName + "/" : "")).ToString();
                 }
 
+                if (forcedPrefixDirName._IsFilled())
+                {
+                    result.GeneratedUrlDir += forcedPrefixDirName + "/";
+                    result.GeneratedUrlDirAuthDirect += forcedPrefixDirName + "/";
+                }
+
                 result.GeneratedUrlFirstFileDirect = result.GeneratedUrlDirAuthDirect._CombineUrl(firstFileRelativeName).ToString();
 
                 if (option.IsInboxCreateMode)
