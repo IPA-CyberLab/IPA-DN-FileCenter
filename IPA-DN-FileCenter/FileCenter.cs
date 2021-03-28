@@ -563,7 +563,7 @@ namespace IPA.DN.FileCenter
         {
             this.Destination = this.Destination._NonNullTrimSe()._TruncStr(Consts.MaxLens.NormalStringTruncateLen);
             this.UrlHint = this.UrlHint._Normalize(true, true, false, false);
-            this.UrlHint = this.UrlHint._MakeSafeAsciiOnlyNonSpaceFileName();
+            this.UrlHint = this.UrlHint._MakeVerySafeAsciiOnlyNonSpaceFileName();
             this.UrlHint = this.UrlHint.ToLower();
 
             StringBuilder sb = new StringBuilder();
@@ -961,11 +961,11 @@ namespace IPA.DN.FileCenter
                         tmp = $"{prefixYymmdd}_" + clientIpAddress + "_" + hostNameOrIp;
                     }
 
-                    string safeFirstFileName = PathParser.Windows.GetFileNameWithoutExtension(fileList.FileList.FirstOrDefault()?.RelativeFileName ?? "")._MakeSafeFileName();
+                    string safeFirstFileName = PathParser.Windows.GetFileName(fileList.FileList.FirstOrDefault()?.RelativeFileName ?? "")._MakeSafeFileName();
 
                     if (safeFirstFileName._IsFilled())
                     {
-                        safeFirstFileName = safeFirstFileName._MakeSafeAsciiOnlyNonSpaceFileName().ToLower();
+                        safeFirstFileName = safeFirstFileName._MakeVerySafeAsciiOnlyNonSpaceFileName().ToLower();
                         tmp += "_" + safeFirstFileName;
                     }
 
