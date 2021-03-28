@@ -952,13 +952,15 @@ namespace IPA.DN.FileCenter
 
                     string tmp;
 
+                    string clientIpAddressWithoutColon = clientIpAddress._ReplaceStr(":", ".");
+
                     if (hostNameOrIp._IsSamei(clientIpAddress))
                     {
-                        tmp = $"{prefixYymmdd}_" + clientIpAddress;
+                        tmp = $"{prefixYymmdd}_" + clientIpAddressWithoutColon;
                     }
                     else
                     {
-                        tmp = $"{prefixYymmdd}_" + clientIpAddress + "_" + hostNameOrIp;
+                        tmp = $"{prefixYymmdd}_" + clientIpAddressWithoutColon + "_" + hostNameOrIp;
                     }
 
                     string safeFirstFileName = PathParser.Windows.GetFileName(fileList.FileList.FirstOrDefault()?.RelativeFileName ?? "")._MakeSafeFileName();
