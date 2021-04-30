@@ -385,6 +385,8 @@ namespace IPA.DN.FileCenter
                 w.WriteLine();
                 w.WriteLine("上記 URL にアクセスいただきますと、ファイルをアップロードするためのフォームが表示されます。");
                 w.WriteLine("画面の指示に従い、ファイルのアップロードをお願いいたします。");
+                w.WriteLine();
+                w.WriteLine("※ 受信されるメールソフトウェアの都合で URL に改行が入り、2 行に分割されている場合があります。その場合は、お手数ですが 1 行にコピー＆ペーストしていただき、アクセスをお願いいたします。");
 
                 w.WriteLine();
                 w.WriteLine("※ この URL は第三者に配布・転載しないでください。");
