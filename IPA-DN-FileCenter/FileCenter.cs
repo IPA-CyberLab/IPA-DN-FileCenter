@@ -271,6 +271,8 @@ namespace IPA.DN.FileCenter
                     w.WriteLine("※ 上記のユーザー・パスワードは、アクセス制御の識別符号に該当します。");
                     w.WriteLine("   本メッセージの宛名人に発行されたものであり、他人は使用できません。");
                     w.WriteLine("   詳しくは、下記の「法律上の注意」をお読みください。");
+                    w.WriteLine("※ 上記 URL がメールソフトウェアの仕様で改行されている場合は、");
+                    w.WriteLine("   誠にお手数ですが 1 行に結合いただいた上でアクセスをお願いします。");
                     w.WriteLine();
                 }
 
@@ -300,8 +302,8 @@ namespace IPA.DN.FileCenter
                     w.WriteLine("■ ファイルをダウンロードするための URL");
                     w.WriteLine("  (ユーザー名とパスワードが埋め込まれた 1 行 URL):");
                     w.WriteLine(this.GeneratedUrlDirAuthCredentialDirect);
-                    w.WriteLine("- 上記 URL がメールソフトウェアの都合で改行されている場合は、");
-                    w.WriteLine("  お手数ですが 1 行に結合していただいた上でアクセスをお願いします。");
+                    w.WriteLine("- 上記 URL がメールソフトウェアの仕様で改行されている場合は、");
+                    w.WriteLine("  誠にお手数ですが 1 行に結合いただいた上でアクセスをお願いします。");
                     w.WriteLine("- Internet Explorer では上記 URL は使用できません。");
                     w.WriteLine("  Chrome, Firefox, Edge 等のブラウザをご利用ください。");
                     w.WriteLine("- Chrome のバージョンによっては、パスワードが埋め込まれた URL が");
