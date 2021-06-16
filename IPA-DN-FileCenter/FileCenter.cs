@@ -633,7 +633,7 @@ namespace IPA.DN.FileCenter
                     stat: this.Stat,
                     flags: LogBrowserFlags.NoPreview | LogBrowserFlags.NoRootDirectory | LogBrowserFlags.SecureJson), FileCenterConsts.FileBrowserDownloadHttpDir);
 
-                this.HiveData.EventListener.RegisterCallback(async (caller, type, state) =>
+                this.HiveData.EventListener.RegisterCallback(async (caller, type, state, _) =>
                 {
                     await SettingsUpdateAsync();
                 });
