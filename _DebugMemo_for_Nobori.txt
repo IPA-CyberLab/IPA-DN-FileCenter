@@ -1,0 +1,19 @@
+﻿登用個人メモ
+
+dnt-ub1
+
+■ Git
+cd /data1/uploader/IPA-DN-FileCenter/IPA-DN-FileCenter/ && (git pull origin master && git submodule update --init --recursive) && dotnet run Daemon test
+
+
+■ 直接さん
+\\dnt-ub1\root\data1\uploader\IPA-DN-FileCenter\IPA-DN-FileCenter-VS2019.sln
+
+cd /data1/uploader/IPA-DN-FileCenter/IPA-DN-FileCenter/ && dotnet run Daemon test
+
+
+https://dnt-ub1.sehosts.com/
+
+openssl s_client -connect dnt-ub1.sehosts.com:443 -showcerts -servername dnt-ub1.sehosts.com
+
+
