@@ -1,5 +1,6 @@
 ﻿@model ErrorViewModel
 @{
+    Model._MarkNotNull();
     Page.Title = "エラー";
 
     string ErrorStr = "エラー: " + (Model.ErrorInfo?.Message ?? "不明なエラーが発生しました。");

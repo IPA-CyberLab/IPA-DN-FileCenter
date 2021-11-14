@@ -1,6 +1,7 @@
 ﻿@model UploadResult
 
 @{
+    Model._MarkNotNull();
     Page.Title = "ファイルのアップロードが完了しました";
 
     var dbSnapshot = Server.DbSnapshot;

@@ -1,6 +1,7 @@
 ﻿@model UploadResult
 
 @{
+    Model._MarkNotNull();
     Page.Title = "新しいゲストアップロード領域が作成されました";
 
     var dbSnapshot = Server.DbSnapshot;

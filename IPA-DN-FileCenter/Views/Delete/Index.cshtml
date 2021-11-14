@@ -1,5 +1,6 @@
 ﻿@model DeleteForm
 @{
+    Model._MarkNotNull();
     Page.Title = "URL の緊急削除";
 
     var dbSnapshot = Server.DbSnapshot;
