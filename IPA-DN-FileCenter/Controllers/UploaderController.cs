@@ -44,7 +44,7 @@ namespace IPA.DN.FileCenter.Controllers
 
             if (cookie == null) cookie = new UploadFormCookies();
 
-            string baseUrl = Request.GetDisplayUrl()._ParseUrl()._CombineUrl("/").ToString();
+            string baseUrl = Request.GetUrl()._ParseUrl()._CombineUrl("/").ToString();
 
             string curlCmdLine =
                 $"$ curl {baseUrl}Uploader/Upload -k -f -F \"pin={currentPin}\" -F \"json=true\" -F \"getfile=false\" -F \"getdir=false\" -F \"days=0\" -F \"auth=false\" -F \"log=true\" -F \"once=false\" -F \"urlhint=testfile\" -F \"zip=false\" -F \"file=@送信ファイル１\" -F \"file=@送信ファイル２\"";
@@ -147,7 +147,7 @@ namespace IPA.DN.FileCenter.Controllers
                 var result = await server.UploadAsync(DateTimeOffset.Now,
                     Request.HttpContext.Connection.RemoteIpAddress._UnmapIPv4()!.ToString(),
                     Request.HttpContext.Connection.RemotePort,
-                    Request.GetDisplayUrl(),
+                    Request.GetUrl(),
                     fl,
                     opt,
                     cancel);
