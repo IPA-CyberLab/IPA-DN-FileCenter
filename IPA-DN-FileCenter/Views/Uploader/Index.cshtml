@@ -13,8 +13,10 @@
     <div class="box">
         <div class="content">
 
-            <p><b>1 個または複数のファイルを組織外のユーザーと共有するため、アップロードできます。完了すると、乱数で生成された URL 等が表示されます。その URL 等をファイルを送りたい相手にメール等にコピー &amp; ペーストして送信してください。</b>
-            <br>この画面は、本システムの組織内ユーザーが外部にファイルを送信するためのものです。外部のユーザーにファイルをアップロードしてもらうためには、<a href="/u/"><b>ゲストアップロード領域の作成</b></a> を利用します。</p>
+            <p>
+                <b>1 個または複数のファイルを組織外のユーザーと共有するため、アップロードできます。完了すると、乱数で生成された URL 等が表示されます。その URL 等をファイルを送りたい相手にメール等にコピー &amp; ペーストして送信してください。</b>
+                <br>この画面は、本システムの組織内ユーザーが外部にファイルを送信するためのものです。外部のユーザーにファイルをアップロードしてもらうためには、<a href="/u/"><b>ゲストアップロード領域の作成</b></a> を利用します。
+            </p>
 
             @for (int i = 1; i <= FileCenterConsts.MaxUploadFileFormElements; i++)
             {
@@ -46,21 +48,24 @@
 
             }
 
-            <p>　</p>
+            @if (Server.DbSnapshot.ShowRecipientNameTextBox)
+            {
+                <p>　</p>
 
-            <div class="field">
-                <label class="label">このファイルを受け取る相手の名前 (できるだけ入力してください):</label>
-                <div class="control has-icons-left has-icons-right">
-                    <input class="input is-primary" type="text" placeholder="このファイルの受け取り手を特定できる組織名および宛名 (名字だけでも可) を入力することをお勧めします。" name="recipient" value="">
-                    <span class="icon is-small is-left">
-                        <i class="fas fa-user"></i>
-                    </span>
+                <div class="field">
+                    <label class="label">このファイルを受け取る相手の名前 (できるだけ入力してください):</label>
+                    <div class="control has-icons-left has-icons-right">
+                        <input class="input is-primary" type="text" placeholder="このファイルの受け取り手を特定できる組織名および宛名 (名字だけでも可) を入力することをお勧めします。" name="recipient" value="">
+                        <span class="icon is-small is-left">
+                            <i class="fas fa-user"></i>
+                        </span>
+                    </div>
+                    <p class="help is-primary">
+                        このファイルへのアクセス時のユーザー認証を有効化し、ID とパスワードをここで入力した相手先でしか利用できないように明示することができます。<br>
+                        これにより、ID とパスワードを記載したメールを送信する際に万一誤送信が発生しても、誤って受信した第三者は不正アクセス禁止法に違反することなくファイルにアクセスできなくなり、メールの誤送信時における誤送信者の法的責任を緩和できます。
+                    </p>
                 </div>
-                <p class="help is-primary">
-                    このファイルへのアクセス時のユーザー認証を有効化し、ID とパスワードをここで入力した相手先でしか利用できないように明示することができます。<br>
-                    これにより、ID とパスワードを記載したメールを送信する際に万一誤送信が発生しても、誤って受信した第三者は不正アクセス禁止法に違反することなくファイルにアクセスできなくなり、メールの誤送信時における誤送信者の法的責任を緩和できます。
-                </p>
-            </div>
+            }
 
             <p>　</p>
 

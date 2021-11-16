@@ -70,10 +70,10 @@ namespace IPA.DN.FileCenter
         public const string HiveSettingsName = "FileCenter/Settings";
 
         public const string FileBrowserDownloadHttpDir = "/d";
-
+        
         public const string FileBrowserUploadInboxHttpDir = "/u";
 
-        public const string DefaultWebSiteTitle = "「IPA ファイルの窓口」 - オウプンソース セキュアファイルアップロードシステム";
+        public const string DefaultWebSiteTitle = "「IPA FileCenter」 - オープンソース セキュアファイルアップロードシステム";
 
         public const int MaxUploadFileFormElements = 10;
 
@@ -136,6 +136,8 @@ namespace IPA.DN.FileCenter
 
         public string DataStoreRootDir { get; set; } = "";
         public DateTimeOffset LastUploadDateTime { get; set; }
+
+        public bool ShowRecipientNameTextBox { get; set; } = false;
 
         public int LastSeqNo { get; set; }
 
