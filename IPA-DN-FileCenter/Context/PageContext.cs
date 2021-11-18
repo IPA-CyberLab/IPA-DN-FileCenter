@@ -23,18 +23,17 @@ using static IPA.Cores.Globals.Codes;
 
 using Microsoft.AspNetCore.Mvc.Razor;
 
-namespace IPA.DN.FileCenter
-{
-    // IPA.DN.FileCenter 用のページコンテキスト
-    public class PageContext : AspPageContext
-    {
-        public DateTimeOffset Now = DateTimeOffset.Now;
+namespace IPA.DN.FileCenter;
 
-        // サイト名
-        public PageContext()
-        {
-            this.SiteName = "IPA FileCenter セキュアファイルアップロードシステム";
-        }
+// IPA.DN.FileCenter 用のページコンテキスト
+public class PageContext : AspPageContext
+{
+    public DateTimeOffset Now = DateTimeOffset.Now;
+
+    // サイト名
+    public PageContext()
+    {
+        this.SiteName = "IPA FileCenter セキュアファイルアップロードシステム";
     }
 }
 

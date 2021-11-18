@@ -32,30 +32,29 @@ using static IPA.Cores.Globals.Codes;
 using IPA.DN.FileCenter;
 using IPA.DN.FileCenter.Models;
 
-namespace IPA.DN.FileCenter
+namespace IPA.DN.FileCenter;
+
+[Route(FileCenterConsts.FileBrowserDownloadHttpDir + "/{*path}")]
+public class FileCenterBrowserController : Controller
 {
-    [Route(FileCenterConsts.FileBrowserDownloadHttpDir + "/{*path}")]
-    public class FileCenterBrowserController : Controller
+    public async Task<IActionResult> Index([FromServices] Server server)
     {
-        public async Task<IActionResult> Index([FromServices] Server server)
+        string fullpath = Request._GetRequestPathAndQueryString();
+
+        if (fullpath._TryTrimStartWith(out string path, StringComparison.OrdinalIgnoreCase, FileCenterConsts.FileBrowserDownloadHttpDir) == false)
         {
-            string fullpath = Request._GetRequestPathAndQueryString();
+            return new ContentResult { Content = "Invalid URL", ContentType = "text/plain", StatusCode = 404 };
+        }
+        else
+        {
+            HttpResult result = await server.ProcessFileBrowserRequestAsync(
+                HttpContext.Connection.RemoteIpAddress._UnmapIPv4()!,
+                HttpContext.Connection.RemotePort,
+                Request._GetRequestPathAndQueryString(),
+                Request, Response,
+                this._GetRequestCancellationToken());
 
-            if (fullpath._TryTrimStartWith(out string path, StringComparison.OrdinalIgnoreCase, FileCenterConsts.FileBrowserDownloadHttpDir) == false)
-            {
-                return new ContentResult { Content = "Invalid URL", ContentType = "text/plain", StatusCode = 404 };
-            }
-            else
-            {
-                HttpResult result = await server.ProcessFileBrowserRequestAsync(
-                    HttpContext.Connection.RemoteIpAddress._UnmapIPv4()!,
-                    HttpContext.Connection.RemotePort,
-                    Request._GetRequestPathAndQueryString(),
-                    Request, Response,
-                    this._GetRequestCancellationToken());
-
-                return result.GetHttpActionResult();
-            }
+            return result.GetHttpActionResult();
         }
     }
 }
