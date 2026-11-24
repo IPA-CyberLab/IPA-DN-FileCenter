@@ -465,7 +465,7 @@ public class UploadFile : AsyncService
             if (fileName._IsNullOrZeroLen()) throw new ArgumentNullException(nameof(fileName));
 
             subDirName = subDirName._NonNullTrim();
-
+            
             subDirName = subDirName._MakeSafeFileName();
 
             this.RelativeFileName = (subDirName._IsEmpty() ? "" : subDirName + "/") + fileName;
